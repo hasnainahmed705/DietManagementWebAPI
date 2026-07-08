@@ -2,7 +2,7 @@
 using MongoDB.Driver;
 
 [ApiController]
-[Route("api/MealController]")]
+[Route("api/[controller]")]
 public class MealsController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
