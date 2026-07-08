@@ -7,13 +7,28 @@ public class MongoDbService
 
     public MongoDbService(IConfiguration config)
     {
-        // ✅ Correctly read the connection string by NAME
-        var connectionString = config.GetConnectionString("MongoDb");
+        // 1️⃣ Try environment variable first (used in production/Render)
+        var connectionString = config["MONGODB_CONNECTION_STRING"];
 
-        // ✅ Fallback in case GetConnectionString doesn't work
+        // 2️⃣ Fallback to appsettings.json (used in local development)
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            connectionString = config.GetConnectionString("MongoDb");
+        }
+
+        // 3️⃣ Last resort fallback (for local dev with hardcoded value)
         if (string.IsNullOrEmpty(connectionString))
         {
             connectionString = config["ConnectionStrings:MongoDb"];
+        }
+
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException(
+                "MongoDB connection string is not configured. " +
+                "Set MONGODB_CONNECTION_STRING environment variable " +
+                "or ConnectionStrings:MongoDb in appsettings.json."
+            );
         }
 
         var client = new MongoClient(connectionString);
