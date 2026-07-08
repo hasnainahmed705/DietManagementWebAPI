@@ -3,6 +3,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 public class Meal
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonIgnoreIfDefault]                    // ← Important
+    public string Id { get; set; } = string.Empty;
     public string FoodId { get; set; } = string.Empty;
     public string FoodName { get; set; } = string.Empty;
     public string Unit { get; set; } = string.Empty;
