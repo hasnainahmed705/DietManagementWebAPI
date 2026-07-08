@@ -1,4 +1,5 @@
 ﻿using MongoDB.Driver;
+using Microsoft.Extensions.Configuration;
 
 public class MongoDbService
 {
@@ -6,7 +7,16 @@ public class MongoDbService
 
     public MongoDbService(IConfiguration config)
     {
-        var client = new MongoClient(config.GetConnectionString("mongodb+srv://hasnainwork705_Admin:v7YghSbpvoTukeLD@dietmanagementcluster.hrvbcpm.mongodb.net/\r\n"));
+        // ✅ Correctly read the connection string by NAME
+        var connectionString = config.GetConnectionString("MongoDb");
+
+        // ✅ Fallback in case GetConnectionString doesn't work
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            connectionString = config["ConnectionStrings:MongoDb"];
+        }
+
+        var client = new MongoClient(connectionString);
         _database = client.GetDatabase(config["DietManagementDB"]);
     }
 
