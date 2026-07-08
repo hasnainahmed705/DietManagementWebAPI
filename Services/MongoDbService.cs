@@ -7,28 +7,13 @@ public class MongoDbService
 
     public MongoDbService(IConfiguration config)
     {
-        // 1️⃣ Try environment variable first (used in production/Render)
+        // Try environment variable first (used in Render)
         var connectionString = config["MONGODB_CONNECTION_STRING"];
 
-        // 2️⃣ Fallback to appsettings.json (used in local development)
+        // Fallback to appsettings.json (used locally)
         if (string.IsNullOrEmpty(connectionString))
         {
-            connectionString = config.GetConnectionString("MongoDb");
-        }
-
-        // 3️⃣ Last resort fallback (for local dev with hardcoded value)
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            connectionString = config["ConnectionStrings:MongoDb"];
-        }
-
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            throw new InvalidOperationException(
-                "MongoDB connection string is not configured. " +
-                "Set MONGODB_CONNECTION_STRING environment variable " +
-                "or ConnectionStrings:MongoDb in appsettings.json."
-            );
+            connectionString = config.GetConnectionString("MongoDB");
         }
 
         var client = new MongoClient(connectionString);
