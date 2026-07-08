@@ -1,0 +1,6 @@
+@DietManagementWebAPI_HostAddress = http://localhost:5087
+
+GET {{DietManagementWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
