@@ -7,7 +7,7 @@ public class MongoDbService
     public MongoDbService(IConfiguration config)
     {
         var client = new MongoClient(config.GetConnectionString("MongoDB"));
-        _database = client.GetDatabase(config["DatabaseName"]);
+        _database = client.GetDatabase(config["DietManagementDB"]);
     }
 
     public IMongoCollection<Meal> Meals => _database.GetCollection<Meal>("Meals");
