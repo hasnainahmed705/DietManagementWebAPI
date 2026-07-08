@@ -76,6 +76,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WEBAPI v1");
+    c.RoutePrefix = "swagger"; // → yourapp.onrender.com/swagger
+    c.DefaultModelsExpandDepth(-1);   // hides bottom "Schemas" section entirely
+    c.DefaultModelExpandDepth(-1);    // collapses per-endpoint model tree, keeps example JSON visible
+});
+
 // ---- Middleware pipeline ----
 
 app.UseSwagger();
