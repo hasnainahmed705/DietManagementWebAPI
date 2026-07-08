@@ -15,9 +15,7 @@ public class MealsController : ControllerBase
     // GET: api/meals/ReturnAllMeals
     [HttpGet]
     [Route("ReturnAllMeals")]
-    //[SwaggerOperation(Summary = "Get all meals")]
-    [ProducesResponseType(typeof(List<Meal>), 200)]
-    public async Task<ActionResult<List<Meal>>> GetAll()
+    public async Task<ActionResult> GetAll()
     {
         var meals = await _mongoService.Meals.Find(_ => true).ToListAsync();
         return Ok(meals);
