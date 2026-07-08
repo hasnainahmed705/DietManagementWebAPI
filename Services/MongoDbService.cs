@@ -17,7 +17,7 @@ public class MongoDbService
         }
 
         var client = new MongoClient(connectionString);
-        _database = client.GetDatabase(config["DietManagementDB"]);
+        _database = client.GetDatabase(config["MONGODB_DATABASE"]);
     }
 
     public IMongoCollection<Meal> Meals => _database.GetCollection<Meal>("Meals");
