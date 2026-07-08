@@ -6,7 +6,7 @@ public class MongoDbService
 
     public MongoDbService(IConfiguration config)
     {
-        var client = new MongoClient(config.GetConnectionString("MongoDB"));
+        var client = new MongoClient(config.GetConnectionString("mongodb+srv://hasnainwork705_Admin:v7YghSbpvoTukeLD@dietmanagementcluster.hrvbcpm.mongodb.net/\r\n"));
         _database = client.GetDatabase(config["DietManagementDB"]);
     }
 
