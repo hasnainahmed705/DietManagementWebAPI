@@ -2,7 +2,7 @@
 using MongoDB.Driver;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/MealController]")]
 public class MealsController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
@@ -12,39 +12,65 @@ public class MealsController : ControllerBase
         _mongoService = mongoService;
     }
 
+    // GET: api/meals/ReturnAllMeals
     [HttpGet]
-    public async Task<List<Meal>> GetAll() =>
-        await _mongoService.Meals.Find(_ => true).ToListAsync();
+    [Route("ReturnAllMeals")]
+    public async Task<ActionResult<List<Meal>>> GetAll()
+    {
+        var meals = await _mongoService.Meals.Find(_ => true).ToListAsync();
+        return Ok(meals);
+    }
 
-    [HttpGet("{id}")]
+    // GET: api/meals/ReturnMealById/{id}
+    [HttpGet]
+    [Route("ReturnMealById/{id}")]
     public async Task<ActionResult<Meal>> GetById(string id)
     {
         var meal = await _mongoService.Meals.Find(m => m.Id == id).FirstOrDefaultAsync();
-        return meal;
+
+        if (meal == null)
+            return NotFound();
+
+        return Ok(meal);
     }
 
+    // POST: api/meals/CreateMeal
     [HttpPost]
+    [Route("CreateMeal")]
     public async Task<ActionResult<Meal>> Create(Meal meal)
     {
         await _mongoService.Meals.InsertOneAsync(meal);
         return CreatedAtAction(nameof(GetById), new { id = meal.Id }, meal);
     }
 
-    [HttpPost("bulk")]
+    // POST: api/meals/BulkInsertMeals
+    [HttpPost]
+    [Route("BulkInsertMeals")]
     public async Task<IActionResult> BulkInsert(List<Meal> meals)
     {
+        if (meals == null || meals.Count == 0)
+            return BadRequest(new { message = "No meals provided." });
+
         await _mongoService.Meals.InsertManyAsync(meals);
         return Ok(new { message = "Bulk insert successful", count = meals.Count });
     }
 
-    [HttpPut("{id}")]
+    // PUT: api/meals/UpdateMeal/{id}
+    [HttpPut]
+    [Route("UpdateMeal/{id}")]
     public async Task<IActionResult> Update(string id, Meal meal)
     {
         var result = await _mongoService.Meals.ReplaceOneAsync(m => m.Id == id, meal);
-        return result.ModifiedCount > 0 ? NoContent() : NotFound();
+
+        if (result.MatchedCount == 0)
+            return NotFound();
+
+        return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    // DELETE: api/meals/DeleteMeal/{id}
+    [HttpDelete]
+    [Route("DeleteMeal/{id}")]
     public async Task<IActionResult> Delete(string id)
     {
         var result = await _mongoService.Meals.DeleteOneAsync(m => m.Id == id);
