@@ -1,5 +1,4 @@
-﻿using DietManagementWebAPI.Models.Auth;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 [ApiController]
