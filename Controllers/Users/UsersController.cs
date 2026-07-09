@@ -16,6 +16,14 @@ public class UsersController : ControllerBase
     [Route("InsertNewUser")]
     public async Task<IActionResult> InsertNewUser([FromBody] UsersDBModel registerAuth)
     {
+        var user = await _mongoService.Users
+                                    .Find(u => u.email == registerAuth.email)
+                                    .FirstOrDefaultAsync();
+        if (user != null)
+        {
+            return Conflict(new { message = "Email Already exists!" });
+        }
+
         var _registerAuth = new UsersDBModel
         { 
             email = registerAuth.email,
@@ -31,18 +39,18 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Route("GetUserByUsername/{userName}")]
-    public async Task<ActionResult<UsersDBModel>> GetUserByUsername(string userName)
+    [Route("GetUserByEmail")]
+    public async Task<ActionResult<UsersDBModel>> GetUserByEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(userName))
-            return BadRequest(new { message = "Username is required" });
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest(new { message = "Email is required" });
 
         var user = await _mongoService.Users
-                                     .Find(u => u.userName == userName)
+                                     .Find(u => u.email == email)
                                      .FirstOrDefaultAsync();
 
         if (user == null)
-            return NotFound(new { message = $"User with username '{userName}' not found" });
+            return NotFound(new { message = $"Email '{email}' not found" });
 
         return Ok(user);
     }
