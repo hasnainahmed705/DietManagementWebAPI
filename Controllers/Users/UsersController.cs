@@ -39,14 +39,14 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Route("GetUserByEmail")]
-    public async Task<ActionResult<UsersDBModel>> GetUserByEmail(string email)
+    [Route("ProcessLoginApproval")]
+    public async Task<ActionResult<UsersDBModel>> ProcessLoginApproval(string email,string password)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return BadRequest(new { message = "Email is required" });
-
+        if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(password))
+            return BadRequest(new { message = "Email and Password are required" });
+        
         var user = await _mongoService.Users
-                                     .Find(u => u.email == email)
+                                     .Find(u => (u.email == email && u.password == password))
                                      .FirstOrDefaultAsync();
 
         if (user == null)
