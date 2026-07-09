@@ -1,5 +1,6 @@
-﻿using MongoDB.Driver;
+﻿using DietManagementWebAPI.Models.Auth;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Driver;
 
 public class MongoDbService
 {
@@ -21,4 +22,5 @@ public class MongoDbService
     }
 
     public IMongoCollection<Meal> Meals => _database.GetCollection<Meal>("Meals");
+    public IMongoCollection<RegisterAuth> Users => _database.GetCollection<RegisterAuth>("Users");
 }

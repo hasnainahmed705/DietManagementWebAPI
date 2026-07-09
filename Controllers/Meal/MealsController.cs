@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DietManagementWebAPI.Models.Auth;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 [ApiController]
@@ -14,7 +15,7 @@ public class MealsController : ControllerBase
 
     // GET: api/meals/ReturnAllMeals
     [HttpGet]
-    [Route("ReturnAllMeals")]
+    [Route("GetAllMeals")]
     public async Task<ActionResult> GetAll()
     {
         var meals = await _mongoService.Meals.Find(_ => true).ToListAsync();
@@ -23,7 +24,7 @@ public class MealsController : ControllerBase
 
     // POST: api/meals/BulkInsertMeals
     [HttpPost]
-    [Route("BulkInsertMeals")]
+    [Route("InsertMealsMulti")]
     public async Task<IActionResult> BulkInsert(List<Meal> meals)
     {
         if (meals == null || meals.Count == 0)
@@ -32,4 +33,4 @@ public class MealsController : ControllerBase
         await _mongoService.Meals.InsertManyAsync(meals);
         return Ok(new { message = "Bulk insert successful", count = meals.Count });
     }
-}
+  }
