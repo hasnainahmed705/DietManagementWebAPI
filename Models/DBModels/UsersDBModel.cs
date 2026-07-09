@@ -16,53 +16,42 @@ namespace DietManagementWebAPI.Models.DBModels
         [BsonIgnoreIfDefault]
         public string Id { get; set; }
 
-        [BsonElement("firstName")]
-        public string FirstName { get; set; }
+        [Required]
+        public string firstName { get; set; }
+        [Required]
+        public string lastName { get; set; }
+        [Required]
+        public string email { get; set; }
+        [Required]
+        public string password { get; set; }
 
-        [BsonElement("lastName")]
-        public string LastName { get; set; }
-
-        [BsonElement("email")]
-        public string Email { get; set; }
-
-        [BsonElement("profile")]
-        public UserProfileData? Profile { get; set; }
-
+        public string userName { get; set; } = "";
     }
 
     public class UserProfileData
     {
-        [BsonElement("gender")]
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonIgnoreIfDefault]
+        public string Id { get; set; }
+        public string userName { get; set; }
+
         public string? Gender { get; set; }
 
-        [BsonElement("age")]
         public int? Age { get; set; }
 
-        [BsonElement("heightCm")]
-        public double? HeightCm { get; set; }
+        public string? HeightCm { get; set; }
 
-        [BsonElement("heightInch")]
-        public double? HeightInch { get; set; }
-
-        [BsonElement("weightKg")]
         public double? WeightKg { get; set; }
 
-        [BsonElement("activityLevel")]
-        public string? ActivityLevel { get; set; }
-
-        [BsonElement("goal")]
         public string? Goal { get; set; }
 
-        [BsonElement("dailyCalorieTarget")]
-        public int? DailyCalorieTarget { get; set; }
+        public string? DailyCalorieTarget { get; set; }
 
-        [BsonElement("proteinTargetG")]
-        public int? ProteinTargetG { get; set; }
+        public string? ProteinTargetG { get; set; }
 
-        [BsonElement("carbTargetG")]
-        public int? CarbTargetG { get; set; }
+        public string? CarbTargetG { get; set; }
 
-        [BsonElement("fatTargetG")]
-        public int? FatTargetG { get; set; }
+        public string? FatTargetG { get; set; }
     }
 }

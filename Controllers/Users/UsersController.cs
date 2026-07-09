@@ -1,4 +1,5 @@
 ﻿using DietManagementWebAPI.Models.Auth;
+using DietManagementWebAPI.Models.DBModels;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
@@ -13,18 +14,43 @@ public class UsersController : ControllerBase
 
     [HttpPost]
     [Route("InsertNewUser")]
-    public async Task<IActionResult> InsertNewUser([FromBody] RegisterAuth registerAuth)
+    public async Task<IActionResult> InsertNewUser([FromBody] UsersDBModel registerAuth)
     {
-        var _registerAuth = new RegisterAuth 
+        var _registerAuth = new UsersDBModel
         { 
             email = registerAuth.email,
             firstName= registerAuth.firstName, 
             lastName= registerAuth.lastName,
-            password= registerAuth.password
+            password= registerAuth.password,
+            userName= registerAuth.userName,
         };
 
         await _mongoService.Users.InsertOneAsync(_registerAuth);
+
         return Ok(new { message = "Registration Successfull!"});
+    }
+
+    [HttpPost]
+    [Route("InsertUserProfile")]
+    public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
+    {
+        var _registerAuth = new UserProfileData
+        {
+            Goal = registerAuth.Goal,
+            userName = registerAuth.userName,
+            Gender = registerAuth.Gender,
+            FatTargetG = registerAuth.FatTargetG,
+            CarbTargetG = registerAuth.CarbTargetG,
+            ProteinTargetG = registerAuth.ProteinTargetG,
+            HeightCm = registerAuth.HeightCm,
+            WeightKg = registerAuth.WeightKg,
+            Age = registerAuth.Age,
+            DailyCalorieTarget = registerAuth.DailyCalorieTarget,
+        };
+
+        await _mongoService.UserProfile.InsertOneAsync(_registerAuth);
+
+        return Ok(new { message = "User profile updated successfully!" });
     }
 
     [HttpGet]

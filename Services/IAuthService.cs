@@ -6,7 +6,7 @@ namespace YourProject.Services
 {
     public interface IAuthService
     {
-        Task<AuthResponse> RegisterAsync(RegisterAuth registerData);
+        //Task<AuthResponse> RegisterAsync(RegisterAuth registerData);
         Task<bool> EmailExistsAsync(string email);
         Task<UsersDBModel?> GetUserByEmailAsync(string email);
     }
