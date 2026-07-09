@@ -30,6 +30,23 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Registration Successfull!"});
     }
 
+    [HttpGet]
+    [Route("GetUserByUsername/{userName}")]
+    public async Task<ActionResult<UsersDBModel>> GetUserByUsername(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return BadRequest(new { message = "Username is required" });
+
+        var user = await _mongoService.Users
+                                     .Find(u => u.userName == userName)
+                                     .FirstOrDefaultAsync();
+
+        if (user == null)
+            return NotFound(new { message = $"User with username '{userName}' not found" });
+
+        return Ok(user);
+    }
+
     [HttpPost]
     [Route("InsertUserProfile")]
     public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
