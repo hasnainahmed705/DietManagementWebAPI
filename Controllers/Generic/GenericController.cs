@@ -24,27 +24,36 @@ public class GenericController : ControllerBase
         {
             var collection = _mongoService.GetCollection(request.apiPathValue);
 
-            // Build Filter
+            // Build Filter (Safe)
             var filterBuilder = Builders<dynamic>.Filter;
             var filter = filterBuilder.Empty;
 
-            foreach (var f in request.filters)
+            if (request.filters != null && request.filters.Any())
             {
-                if (string.IsNullOrEmpty(f.filterValue)) continue;
-
-                filter = f.filterType.ToLower() switch
+                foreach (var f in request.filters)
                 {
-                    "contains" => filter & filterBuilder.Regex(f.filterName, new BsonRegularExpression(f.filterValue, "i")),
-                    "gt" => filter & filterBuilder.Gt(f.filterName, f.filterValue),
-                    "lt" => filter & filterBuilder.Lt(f.filterName, f.filterValue),
-                    _ => filter & filterBuilder.Eq(f.filterName, f.filterValue)   // default = eq
-                };
+                    if (string.IsNullOrWhiteSpace(f.filterName) || string.IsNullOrWhiteSpace(f.filterValue))
+                        continue;
+
+                    filter = f.filterType?.ToLower() switch
+                    {
+                        "contains" => filter & filterBuilder.Regex(f.filterName, new BsonRegularExpression(f.filterValue, "i")),
+                        "gt" => filter & filterBuilder.Gt(f.filterName, f.filterValue),
+                        "lt" => filter & filterBuilder.Lt(f.filterName, f.filterValue),
+                        _ => filter & filterBuilder.Eq(f.filterName, f.filterValue)
+                    };
+                }
             }
 
-            // Sorting
-            var sort = request.sortOrder.ToLower() == "desc"
-                ? Builders<dynamic>.Sort.Descending(request.sortField)
-                : Builders<dynamic>.Sort.Ascending(request.sortField ?? "_id");
+            // Sorting (Safe)
+            var sort = Builders<dynamic>.Sort.Ascending("_id"); // Default sort by Id
+
+            if (!string.IsNullOrWhiteSpace(request.sortField))
+            {
+                sort = request.sortOrder?.ToLower() == "desc"
+                    ? Builders<dynamic>.Sort.Descending(request.sortField)
+                    : Builders<dynamic>.Sort.Ascending(request.sortField);
+            }
 
             // Pagination
             int limit = request.ttlRecords > 0 ? request.ttlRecords : 5;
@@ -60,11 +69,8 @@ public class GenericController : ControllerBase
 
             return Ok(new
             {
-                records = data,
-                totalRecords,
-                page = request.page,
-                pageSize = limit,
-                totalPages = (int)Math.Ceiling((double)totalRecords / limit)
+                records = data
+               
             });
         }
         catch (Exception ex)

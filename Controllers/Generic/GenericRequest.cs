@@ -2,18 +2,21 @@
 {
     public class GenericRequest
     {
-        public int page { get; set; } = 0;                    // Page number (0-based)
-        public int ttlRecords { get; set; } = 5;              // Records per page (default 5)
-        public string apiPathValue { get; set; } = string.Empty; // Collection Name
+        public int page { get; set; } = 0;
+        public int ttlRecords { get; set; } = 5;           // Default 5 records
+        public string apiPathValue { get; set; } = string.Empty;
+
+        // Optional Fields
         public string sortField { get; set; } = string.Empty;
-        public string sortOrder { get; set; } = "asc";        // asc or desc
-        public List<FilterItem> filters { get; set; } = new();
+        public string sortOrder { get; set; } = "asc";     // Default ascending
+
+        public List<FilterItem> filters { get; set; } = new List<FilterItem>();
     }
 
     public class FilterItem
     {
         public string filterName { get; set; } = string.Empty;
-        public string filterType { get; set; } = "eq";        // eq, contains, gt, lt, etc.
+        public string filterType { get; set; } = "eq";
         public string filterValue { get; set; } = string.Empty;
     }
 }
