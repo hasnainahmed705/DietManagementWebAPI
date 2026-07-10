@@ -69,8 +69,8 @@ public class GenericController : ControllerBase
 
             return Ok(new
             {
-                records = data
-               
+                data
+
             });
         }
         catch (Exception ex)
