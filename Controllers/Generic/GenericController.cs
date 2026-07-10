@@ -1,6 +1,5 @@
 ﻿using DietManagementWebAPI.Controllers.Generic;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 [ApiController]
@@ -8,10 +7,12 @@ using MongoDB.Driver;
 public class GenericController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
+    private readonly QueryBuilderService _queryBuilder;
 
-    public GenericController(MongoDbService mongoService)
+    public GenericController(MongoDbService mongoService, QueryBuilderService queryBuilder)
     {
         _mongoService = mongoService;
+        _queryBuilder = queryBuilder;
     }
 
     [HttpPost("CommonGetGlobal")]
@@ -24,46 +25,10 @@ public class GenericController : ControllerBase
         {
             var collection = _mongoService.GetCollection(request.apiPathValue);
 
-            // Build Filter (Safe)
-            var filterBuilder = Builders<dynamic>.Filter;
-            var filter = filterBuilder.Empty;
+            var filter = _queryBuilder.BuildFilter(request.filters);
+            var sort = _queryBuilder.BuildSort(request.sortField, request.sortOrder);
 
-            if (request.filters != null && request.filters.Any())
-            {
-                foreach (var f in request.filters)
-                {
-                    if (string.IsNullOrWhiteSpace(f.filterName) || string.IsNullOrWhiteSpace(f.filterValue))
-                        continue;
-
-                    filter = f.filterType?.ToLower() switch
-                    {
-                        "contains" => filter & filterBuilder.Regex(f.filterName, new BsonRegularExpression(f.filterValue, "i")),
-                        "gt" => filter & filterBuilder.Gt(f.filterName, f.filterValue),
-                        "lt" => filter & filterBuilder.Lt(f.filterName, f.filterValue),
-                        _ => filter & filterBuilder.Eq(f.filterName, f.filterValue)
-                    };
-                }
-            }
-
-            // Sorting (Safe)
-            var sort = Builders<dynamic>.Sort.Ascending("_id"); // Default sort by Id
-
-            if (!string.IsNullOrWhiteSpace(request.sortField))
-            {
-                sort = request.sortOrder?.ToLower() == "desc"
-                    ? Builders<dynamic>.Sort.Descending(request.sortField)
-                    : Builders<dynamic>.Sort.Ascending(request.sortField);
-            }
-
-            // Pagination
-            int limit = request.ttlRecords > 0 ? request.ttlRecords : 5;
-            int skip = request.page * limit;
-
-            var data = await collection.Find(filter)
-                                       .Sort(sort)
-                                       .Skip(skip)
-                                       .Limit(limit)
-                                       .ToListAsync();
+            var data = await _queryBuilder.ExecuteQueryAsync(collection,filter,sort,request.page,request.ttlRecords);
 
             var totalRecords = await collection.CountDocumentsAsync(filter);
 

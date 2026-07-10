@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 
 // MongoDB — singleton because MongoClient is thread-safe and manages its own connection pool
 builder.Services.AddSingleton<MongoDbService>();
-
+builder.Services.AddSingleton<QueryBuilderService>();
 // CORS — must define the policy before you can call UseCors("AllowAll")
 builder.Services.AddCors(options =>
 {
