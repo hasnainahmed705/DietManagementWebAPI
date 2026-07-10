@@ -67,11 +67,7 @@ public class GenericController : ControllerBase
 
             var totalRecords = await collection.CountDocumentsAsync(filter);
 
-            return Ok(new
-            {
-                collection
-
-            });
+            return Ok(data);
         }
         catch (Exception ex)
         {
