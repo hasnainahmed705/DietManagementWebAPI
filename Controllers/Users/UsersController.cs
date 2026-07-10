@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
+[ApiController]
+[Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
