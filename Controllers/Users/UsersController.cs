@@ -37,7 +37,7 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Registration Successfull!"});
     }
 
-    [HttpGet]
+    [HttpPost]
     [Route("ProcessLoginApproval")]
     public async Task<ActionResult<UsersDBModel>> ProcessLoginApproval(string email,string password)
     {
