@@ -69,7 +69,7 @@ public class GenericController : ControllerBase
 
             return Ok(new
             {
-                data
+                collection
 
             });
         }
