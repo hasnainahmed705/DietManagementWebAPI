@@ -14,29 +14,88 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    [Route("InsertNewUser")]
-    public async Task<IActionResult> InsertNewUser([FromBody] UsersDBModel registerAuth)
+    [Route("RegisterUser")]
+    public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
     {
-        var user = await _mongoService.Users
-                                    .Find(u => u.email == registerAuth.email)
-                                    .FirstOrDefaultAsync();
-        if (user != null)
+        try
         {
-            return Conflict(new { message = "Email Already exists!" });
+            // Check if email already exists
+            var existingEmail = await _mongoService.Users
+                .Find(u => u.email == request.email)
+                .FirstOrDefaultAsync();
+
+            if (existingEmail != null)
+                return Conflict(new { message = "Email already exists!" });
+
+            // Generate unique username
+            string finalUserName = request.userName;
+
+            if (string.IsNullOrEmpty(finalUserName))
+            {
+                finalUserName = await GenerateUniqueGuestUserNameAsync();
+            }
+
+            // Insert into Users Collection
+            var newUser = new UsersDBModel
+            {
+                firstName = request.firstName,
+                lastName = request.lastName,
+                email = request.email,
+                password = request.password,
+                userName = finalUserName
+            };
+
+            await _mongoService.Users.InsertOneAsync(newUser);
+
+            // Insert into UserProfile Collection
+            var newProfile = new UserProfileData
+            {
+                userName = finalUserName,
+                Goal = request.Goal,
+                Gender = request.Gender,
+                FatTargetG = request.FatTargetG,
+                CarbTargetG = request.CarbTargetG,
+                ProteinTargetG = request.ProteinTargetG,
+                HeightCm = request.HeightCm,
+                WeightKg = request.WeightKg,
+                Age = request.Age,
+                DailyCalorieTarget = request.DailyCalorieTarget
+            };
+
+            await _mongoService.UserProfile.InsertOneAsync(newProfile);
+
+            return Ok(new
+            {
+                message = "Registration successful!",
+                userName = finalUserName
+            });
         }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 
-        var _registerAuth = new UsersDBModel
-        { 
-            email = registerAuth.email,
-            firstName= registerAuth.firstName, 
-            lastName= registerAuth.lastName,
-            password= registerAuth.password,
-            userName= registerAuth.userName,
-        };
+    // Helper Method
+    private async Task<string> GenerateUniqueGuestUserNameAsync()
+    {
+        string userName;
+        var random = new Random();
 
-        await _mongoService.Users.InsertOneAsync(_registerAuth);
+        do
+        {
+            int number = random.Next(100000, 999999);
+            userName = $"Guest@{number}";
 
-        return Ok(new { message = "Registration Successfull!"});
+            // Check if username already exists
+            var existing = await _mongoService.Users
+                .Find(u => u.userName == userName)
+                .FirstOrDefaultAsync();
+
+            if (existing == null)
+                return userName;   // Unique found
+
+        } while (true); // Loop until unique username is found
     }
 
     [HttpPost]
@@ -56,34 +115,34 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    [HttpPost]
-    [Route("InsertUserProfile")]
-    public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
-    {
-        var _registerAuth = new UserProfileData
-        {
-            Goal = registerAuth.Goal,
-            userName = registerAuth.userName,
-            Gender = registerAuth.Gender,
-            FatTargetG = registerAuth.FatTargetG,
-            CarbTargetG = registerAuth.CarbTargetG,
-            ProteinTargetG = registerAuth.ProteinTargetG,
-            HeightCm = registerAuth.HeightCm,
-            WeightKg = registerAuth.WeightKg,
-            Age = registerAuth.Age,
-            DailyCalorieTarget = registerAuth.DailyCalorieTarget,
-        };
+    //[HttpPost]
+    //[Route("InsertUserProfile")]
+    //public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
+    //{
+    //    var _registerAuth = new UserProfileData
+    //    {
+    //        Goal = registerAuth.Goal,
+    //        userName = registerAuth.userName,
+    //        Gender = registerAuth.Gender,
+    //        FatTargetG = registerAuth.FatTargetG,
+    //        CarbTargetG = registerAuth.CarbTargetG,
+    //        ProteinTargetG = registerAuth.ProteinTargetG,
+    //        HeightCm = registerAuth.HeightCm,
+    //        WeightKg = registerAuth.WeightKg,
+    //        Age = registerAuth.Age,
+    //        DailyCalorieTarget = registerAuth.DailyCalorieTarget,
+    //    };
 
-        await _mongoService.UserProfile.InsertOneAsync(_registerAuth);
+    //    await _mongoService.UserProfile.InsertOneAsync(_registerAuth);
 
-        return Ok(new { message = "User profile updated successfully!" });
-    }
+    //    return Ok(new { message = "User profile updated successfully!" });
+    //}
 
-    [HttpGet]
-    [Route("GetAllUsers")]
-    public async Task<ActionResult> GetAllUsers()
-    {
-        var users = await _mongoService.Users.Find(_ => true).ToListAsync();
-        return Ok(users);
-    }
+    //[HttpGet]
+    //[Route("GetAllUsers")]
+    //public async Task<ActionResult> GetAllUsers()
+    //{
+    //    var users = await _mongoService.Users.Find(_ => true).ToListAsync();
+    //    return Ok(users);
+    //}
 }

@@ -28,6 +28,34 @@ namespace DietManagementWebAPI.Models.DBModels
         public string userName { get; set; } = "";
     }
 
+    public class RegisterRequest
+    {
+        // User Table Fields
+        public string firstName { get; set; }
+        public string lastName { get; set; }
+        public string email { get; set; }
+        public string password { get; set; }
+        public string userName { get; set; }   // Optional
+
+        public string? Gender { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? HeightCm { get; set; }
+
+        public double? WeightKg { get; set; }
+
+        public string? Goal { get; set; }
+
+        public string? DailyCalorieTarget { get; set; }
+
+        public string? ProteinTargetG { get; set; }
+
+        public string? CarbTargetG { get; set; }
+
+        public string? FatTargetG { get; set; }
+    }
+
     public class UserProfileData
     {
         [BsonId]
