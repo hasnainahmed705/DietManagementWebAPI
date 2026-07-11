@@ -107,7 +107,15 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound(new { message = $"Email '{email}' not found" });
 
-        return Ok(user);
+        var response = new UsersDBModel
+        {
+            firstName = user.firstName,
+            lastName = user.lastName,
+            email = user.email,
+            userName = user.userName
+        };
+
+        return Ok(response);
     }
 
     //[HttpPost]
