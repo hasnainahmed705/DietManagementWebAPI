@@ -28,6 +28,14 @@ namespace DietManagementWebAPI.Models.DBModels
         public string userName { get; set; } = "";
     }
 
+    public class UserLoginResponse
+    {
+        public string firstName { get; set; }
+        public string lastName { get; set; }
+        public string email { get; set; }
+        public string userName { get; set; }
+    }
+
     public class RegisterRequest
     {
         // User Table Fields
