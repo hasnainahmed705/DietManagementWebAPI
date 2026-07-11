@@ -35,7 +35,6 @@ namespace DietManagementWebAPI.Models.DBModels
         public string lastName { get; set; }
         public string email { get; set; }
         public string password { get; set; }
-        public string userName { get; set; }   // Optional
 
         public string? Gender { get; set; }
 

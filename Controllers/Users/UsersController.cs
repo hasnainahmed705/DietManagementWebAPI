@@ -28,12 +28,7 @@ public class UsersController : ControllerBase
                 return Conflict(new { message = "Email already exists!" });
 
             // Generate unique username
-            string finalUserName = request.userName;
-
-            if (string.IsNullOrEmpty(finalUserName))
-            {
-                finalUserName = await GenerateUniqueGuestUserNameAsync();
-            }
+            string finalUserName = await GenerateUniqueGuestUserNameAsync();
 
             // Insert into Users Collection
             var newUser = new UsersDBModel
