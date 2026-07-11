@@ -29,7 +29,40 @@ public class MealsController : ControllerBase
         if (meals == null || meals.Count == 0)
             return BadRequest(new { message = "No meals provided." });
 
-        await _mongoService.Meals.InsertManyAsync(meals);
-        return Ok(new { message = "Bulk insert successful", count = meals.Count });
+        try
+        {
+            // Get last FoodId for sequence
+            var lastMeal = await _mongoService.Meals
+                .Find(m => true)
+                .SortByDescending(m => m.FoodId)
+                .FirstOrDefaultAsync();
+
+            int nextNumber = 1;
+            if (lastMeal != null && !string.IsNullOrEmpty(lastMeal.FoodId))
+            {
+                string lastId = lastMeal.FoodId.Replace("F", "").Trim();
+                if (int.TryParse(lastId, out int lastNum))
+                {
+                    nextNumber = lastNum + 1;
+                }
+            }
+
+            // Auto assign FoodId
+            foreach (var meal in meals)
+            {
+                meal.FoodId = $"F{nextNumber:D3}";
+                nextNumber++;
+            }
+
+            // Insert
+            await _mongoService.Meals.InsertManyAsync(meals);
+
+            // Return the full inserted documents
+            return Ok(meals);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
-  }
+}
