@@ -89,4 +89,17 @@ namespace DietManagementWebAPI.Models.DBModels
 
         public string? FatTargetG { get; set; }
     }
+
+    public class UserProfileUpdateDto
+    {
+        public string? Gender { get; set; }
+        public int? Age { get; set; }
+        public string? HeightCm { get; set; }
+        public double? WeightKg { get; set; }
+        public string? Goal { get; set; }
+        public string? DailyCalorieTarget { get; set; }
+        public string? ProteinTargetG { get; set; }
+        public string? CarbTargetG { get; set; }
+        public string? FatTargetG { get; set; }
+    }
 }

@@ -118,33 +118,70 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPatch]
+    [HttpPut]
     [Route("UpdateUserProfile")]
-    public async Task<ActionResult<UsersDBModel>> UpdateUserProfile(string userName)
+    public async Task<ActionResult<UserProfileData>> UpdateUserProfile(
+    string userName,
+    [FromBody] UserProfileUpdateDto profileData)
     {
-        if (string.IsNullOrWhiteSpace(userName))
-            return BadRequest(new { message = "Username is required!" });
-
-        var user = await _mongoService.UserProfile
-                                     .Find(u => (u.userName == userName))
-                                     .FirstOrDefaultAsync();
-
-        var response = new UserProfileData
+        try
         {
-            userName = user.userName,
-            Gender = user.Gender,
-            Age = user.Age,
-            HeightCm = user.HeightCm,
-            WeightKg = user.WeightKg,
-            Goal = user.Goal,
-            DailyCalorieTarget = user.DailyCalorieTarget,
-            ProteinTargetG = user.ProteinTargetG,
-            CarbTargetG = user.CarbTargetG,
-            FatTargetG = user.FatTargetG
-        };
+            // Check if user exists
+            var existingUser = await _mongoService.UserProfile
+                                                  .Find(u => u.userName == userName)
+                                                  .FirstOrDefaultAsync();
 
-        return Ok(response);
+            if (existingUser == null)
+            {
+                return NotFound(new { message = $"User '{userName}' not found." });
+            }
+
+            // Build dynamic update definition
+            var updateBuilder = Builders<UserProfileData>.Update;
+            var updates = new List<UpdateDefinition<UserProfileData>>();
+
+            // Use reflection or manual checks to only update provided fields
+            if (profileData.Gender != null) updates.Add(updateBuilder.Set(u => u.Gender, profileData.Gender));
+            if (profileData.Age.HasValue) updates.Add(updateBuilder.Set(u => u.Age, profileData.Age));
+            if (profileData.HeightCm != null) updates.Add(updateBuilder.Set(u => u.HeightCm, profileData.HeightCm));
+            if (profileData.WeightKg.HasValue) updates.Add(updateBuilder.Set(u => u.WeightKg, profileData.WeightKg));
+            if (profileData.Goal != null) updates.Add(updateBuilder.Set(u => u.Goal, profileData.Goal));
+            if (profileData.DailyCalorieTarget != null) updates.Add(updateBuilder.Set(u => u.DailyCalorieTarget, profileData.DailyCalorieTarget));
+            if (profileData.ProteinTargetG != null) updates.Add(updateBuilder.Set(u => u.ProteinTargetG, profileData.ProteinTargetG));
+            if (profileData.CarbTargetG != null) updates.Add(updateBuilder.Set(u => u.CarbTargetG, profileData.CarbTargetG));
+            if (profileData.FatTargetG != null) updates.Add(updateBuilder.Set(u => u.FatTargetG, profileData.FatTargetG));
+
+            if (updates.Count == 0)
+            {
+                return BadRequest("No valid fields provided to update.");
+            }
+
+            var combinedUpdate = updateBuilder.Combine(updates);
+
+            // Update the document
+            var result = await _mongoService.UserProfile.UpdateOneAsync(
+                Builders<UserProfileData>.Filter.Eq(u => u.userName, userName),
+                combinedUpdate
+            );
+
+            if (result.MatchedCount == 0)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Return the updated document
+            var updatedUser = await _mongoService.UserProfile
+                                                .Find(u => u.userName == userName)
+                                                .FirstOrDefaultAsync();
+
+            return Ok(updatedUser);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
+
 
     //[HttpPost]
     //[Route("InsertUserProfile")]
