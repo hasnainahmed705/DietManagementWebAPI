@@ -118,6 +118,34 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPatch]
+    [Route("UpdateUserProfile")]
+    public async Task<ActionResult<UsersDBModel>> UpdateUserProfile(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return BadRequest(new { message = "Username is required!" });
+
+        var user = await _mongoService.UserProfile
+                                     .Find(u => (u.userName == userName))
+                                     .FirstOrDefaultAsync();
+
+        var response = new UserProfileData
+        {
+            userName = user.userName,
+            Gender = user.Gender,
+            Age = user.Age,
+            HeightCm = user.HeightCm,
+            WeightKg = user.WeightKg,
+            Goal = user.Goal,
+            DailyCalorieTarget = user.DailyCalorieTarget,
+            ProteinTargetG = user.ProteinTargetG,
+            CarbTargetG = user.CarbTargetG,
+            FatTargetG = user.FatTargetG
+        };
+
+        return Ok(response);
+    }
+
     //[HttpPost]
     //[Route("InsertUserProfile")]
     //public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
