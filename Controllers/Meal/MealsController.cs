@@ -83,4 +83,34 @@ public class MealsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpDelete]
+    [Route("DeleteUserMeal")]
+    public async Task<IActionResult> DeleteUserMeal(string userName, string foodName)
+    {
+        var filter = Builders<UsersMealsData>.Filter.Where(
+            u => u.userName == userName && u.FoodName == foodName
+        );
+
+        var meal = await _mongoService.UsersMeals
+                                      .Find(filter)
+                                      .FirstOrDefaultAsync();
+
+        if (meal == null)
+            return NotFound(new { message = $"Meal: {foodName} not found for the user: {userName}!" });
+
+        try
+        {
+            var result = await _mongoService.UsersMeals.DeleteOneAsync(filter);
+
+            return result.IsAcknowledged && result.DeletedCount > 0
+                ? Ok(new { message = "Meal has been deleted successfully", deletedMeal = meal })
+                : NotFound(new { message = "Meal has not been deleted!" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
 }
