@@ -104,8 +104,8 @@ public class MealsController : ControllerBase
             var result = await _mongoService.UsersMeals.DeleteOneAsync(filter);
 
             return result.IsAcknowledged && result.DeletedCount > 0
-                ? Ok(new { message = "Meal has been deleted successfully", deletedMeal = meal })
-                : NotFound(new { message = "Meal has not been deleted!" });
+                ? Ok("Meal has been deleted successfully")
+                : NotFound("Meal has not been deleted!");
         }
         catch (Exception ex)
         {
