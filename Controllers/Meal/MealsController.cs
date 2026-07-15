@@ -65,4 +65,22 @@ public class MealsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpPost]
+    [Route("InsertUserMeal")]
+    public async Task<IActionResult> InsertUserMeal(UsersMealsData meals)
+    {
+        if (meals.FoodName == "")
+            return BadRequest(new { message = "No meals provided." });
+
+        try
+        {
+            await _mongoService.UsersMeals.InsertOneAsync(meals);
+            return Ok(meals);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

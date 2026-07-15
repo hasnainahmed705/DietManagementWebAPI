@@ -29,4 +29,5 @@ public class MongoDbService
     public IMongoCollection<Meal> Meals => _database.GetCollection<Meal>("Meals");
     public IMongoCollection<UsersDBModel> Users => _database.GetCollection<UsersDBModel>("Users");
     public IMongoCollection<UserProfileData> UserProfile => _database.GetCollection<UserProfileData>("UserProfile");
+    public IMongoCollection<UsersMealsData> UsersMeals => _database.GetCollection<UsersMealsData>("UsersMeals");
 }
