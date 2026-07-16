@@ -1,5 +1,6 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
 
 [ApiController]
@@ -117,6 +118,37 @@ public class UsersController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPatch]
+    [Route("UpdateUserName")]
+    public async Task<ActionResult<UsersDBModel>> UpdateUserName(string email, string updatedUserName)
+    {
+        // 1. Validate inputs
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest(new { message = "Email is required!" });
+
+        if (string.IsNullOrWhiteSpace(updatedUserName))
+            return BadRequest(new { message = "New username is required!" });
+
+        // 2. Build filter and update definition
+        var filter = Builders<UsersDBModel>.Filter.Eq(u => u.email, email);
+        var update = Builders<UsersDBModel>.Update.Set(u => u.userName, updatedUserName);
+
+        // 3. Find and update, returning the updated document
+        var updatedUser = await _mongoService.Users.FindOneAndUpdateAsync(
+            filter,
+            update,
+            new FindOneAndUpdateOptions<UsersDBModel, UsersDBModel>
+            {
+                ReturnDocument = ReturnDocument.After
+            });
+
+        if (updatedUser == null)
+            return NotFound(new { message = $"Email '{email}' not found" });
+
+        return Ok(updatedUser);
+    }
+
 
     [HttpPut]
     [Route("UpdateUserProfile")]
