@@ -145,7 +145,7 @@ public class UsersController : ControllerBase
         if (oldUserName == updatedUserName)
             return Ok(new
             {
-                message = "Username is already the same",
+                message = "Username is already the same.",
                 user = existingUser
             });
 
@@ -157,8 +157,7 @@ public class UsersController : ControllerBase
         if (duplicateUser != null)
             return Conflict(new
             {
-                message = $"Username '{updatedUserName}' is already taken by another user",
-                takenByEmail = duplicateUser.email
+                message = $"Username '{updatedUserName}' is already taken by another user. Please select another one!",
             });
 
         // 5. Start transaction and update all 3 collections
