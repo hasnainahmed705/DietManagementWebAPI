@@ -1,7 +1,8 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
+using System;
+using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -121,33 +122,79 @@ public class UsersController : ControllerBase
 
     [HttpPatch]
     [Route("UpdateUserName")]
-    public async Task<ActionResult<UsersDBModel>> UpdateUserName(string email, string updatedUserName)
+    public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
     {
-        // 1. Validate inputs
         if (string.IsNullOrWhiteSpace(email))
             return BadRequest(new { message = "Email is required!" });
 
         if (string.IsNullOrWhiteSpace(updatedUserName))
-            return BadRequest(new { message = "New username is required!" });
+            return BadRequest(new { message = "New userName is required!" });
 
-        // 2. Build filter and update definition
-        var filter = Builders<UsersDBModel>.Filter.Eq(u => u.email, email);
-        var update = Builders<UsersDBModel>.Update.Set(u => u.userName, updatedUserName);
+        var existingUser = await _mongoService.Users
+                                              .Find(u => u.email == email)
+                                              .FirstOrDefaultAsync();
 
-        // 3. Find and update, returning the updated document
-        var updatedUser = await _mongoService.Users.FindOneAndUpdateAsync(
-            filter,
-            update,
-            new FindOneAndUpdateOptions<UsersDBModel, UsersDBModel>
-            {
-                ReturnDocument = ReturnDocument.After
-            });
-
-        if (updatedUser == null)
+        if (existingUser == null)
             return NotFound(new { message = $"Email '{email}' not found" });
 
-        return Ok(updatedUser);
+        var oldUserName = existingUser.userName;
+
+        if (oldUserName == updatedUserName)
+            return Ok(new { message = "userName is already up to date", user = existingUser });
+
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        try
+        {
+            session.StartTransaction();
+
+            var userFilter = Builders<UsersDBModel>.Filter.Eq(u => u.email, email);
+            var userUpdate = Builders<UsersDBModel>.Update.Set(u => u.userName, updatedUserName);
+
+            var updatedUser = await _mongoService.Users.FindOneAndUpdateAsync(
+                session,
+                userFilter,
+                userUpdate,
+                new FindOneAndUpdateOptions<UsersDBModel, UsersDBModel>
+                {
+                    ReturnDocument = ReturnDocument.After
+                });
+
+            if (updatedUser == null)
+                throw new Exception("User update failed");
+
+            var profileFilter = Builders<UserProfileData>.Filter.Eq(p => p.userName, oldUserName);
+            var profileUpdate = Builders<UserProfileData>.Update.Set(p => p.userName, updatedUserName);
+            var profileResult = await _mongoService.UserProfile.UpdateManyAsync(session, profileFilter, profileUpdate);
+
+            var mealsFilter = Builders<UsersMealsData>.Filter.Eq(m => m.userName, oldUserName);
+            var mealsUpdate = Builders<UsersMealsData>.Update.Set(m => m.userName, updatedUserName);
+            var mealsResult = await _mongoService.UsersMeals.UpdateManyAsync(session, mealsFilter, mealsUpdate);
+
+            await session.CommitTransactionAsync();
+
+            return Ok(new
+            {
+                message = "userName updated successfully across all collections",
+                user = updatedUser,
+                relatedUpdates = new
+                {
+                    userProfileRecordsUpdated = profileResult.ModifiedCount,
+                    usersMealsRecordsUpdated = mealsResult.ModifiedCount
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            return StatusCode(500, new
+            {
+                message = "Update failed, all changes rolled back",
+                error = ex.Message
+            });
+        }
     }
+
 
 
     [HttpPut]

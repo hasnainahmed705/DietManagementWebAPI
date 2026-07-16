@@ -5,6 +5,7 @@ using MongoDB.Driver;
 public class MongoDbService
 {
     private readonly IMongoDatabase _database;
+    private readonly IMongoClient _client;
 
     public MongoDbService(IConfiguration config)
     {
@@ -17,9 +18,12 @@ public class MongoDbService
             connectionString = config.GetConnectionString("MongoDB");
         }
 
-        var client = new MongoClient(connectionString);
-        _database = client.GetDatabase(config["MONGODB_DATABASE"]);
+        _client = new MongoClient(connectionString);
+        _database = _client.GetDatabase(config["MONGODB_DATABASE"]);
     }
+
+    // 👇 ADD THIS PROPERTY — exposes the IMongoClient for transactions
+    public IMongoClient Client => _client;
 
     public IMongoCollection<dynamic> GetCollection(string collectionName)
     {
