@@ -124,12 +124,14 @@ public class UsersController : ControllerBase
     [Route("UpdateUserName")]
     public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
     {
+        // 1. Validate inputs
         if (string.IsNullOrWhiteSpace(email))
             return BadRequest(new { message = "Email is required!" });
 
         if (string.IsNullOrWhiteSpace(updatedUserName))
-            return BadRequest(new { message = "New userName is required!" });
+            return BadRequest(new { message = "New Username is required!" });
 
+        // 2. Find the user by email
         var existingUser = await _mongoService.Users
                                               .Find(u => u.email == email)
                                               .FirstOrDefaultAsync();
@@ -139,15 +141,34 @@ public class UsersController : ControllerBase
 
         var oldUserName = existingUser.userName;
 
+        // 3. If new userName is same as old, no update needed
         if (oldUserName == updatedUserName)
-            return Ok(new { message = "userName is already up to date", user = existingUser });
+            return Ok(new
+            {
+                message = "Username is already the same",
+                user = existingUser
+            });
 
+        // 4. ✅ NEW: Check if the updatedUserName is already taken by ANOTHER user
+        var duplicateUser = await _mongoService.Users
+                                                .Find(u => u.userName == updatedUserName && u.email != email)
+                                                .FirstOrDefaultAsync();
+
+        if (duplicateUser != null)
+            return Conflict(new
+            {
+                message = $"Username '{updatedUserName}' is already taken by another user",
+                takenByEmail = duplicateUser.email
+            });
+
+        // 5. Start transaction and update all 3 collections
         using var session = await _mongoService.Client.StartSessionAsync();
 
         try
         {
             session.StartTransaction();
 
+            // Update Users
             var userFilter = Builders<UsersDBModel>.Filter.Eq(u => u.email, email);
             var userUpdate = Builders<UsersDBModel>.Update.Set(u => u.userName, updatedUserName);
 
@@ -163,10 +184,12 @@ public class UsersController : ControllerBase
             if (updatedUser == null)
                 throw new Exception("User update failed");
 
+            // Update UserProfile
             var profileFilter = Builders<UserProfileData>.Filter.Eq(p => p.userName, oldUserName);
             var profileUpdate = Builders<UserProfileData>.Update.Set(p => p.userName, updatedUserName);
             var profileResult = await _mongoService.UserProfile.UpdateManyAsync(session, profileFilter, profileUpdate);
 
+            // Update UsersMeals
             var mealsFilter = Builders<UsersMealsData>.Filter.Eq(m => m.userName, oldUserName);
             var mealsUpdate = Builders<UsersMealsData>.Update.Set(m => m.userName, updatedUserName);
             var mealsResult = await _mongoService.UsersMeals.UpdateManyAsync(session, mealsFilter, mealsUpdate);
@@ -175,13 +198,8 @@ public class UsersController : ControllerBase
 
             return Ok(new
             {
-                message = "userName updated successfully across all collections",
-                user = updatedUser,
-                relatedUpdates = new
-                {
-                    userProfileRecordsUpdated = profileResult.ModifiedCount,
-                    usersMealsRecordsUpdated = mealsResult.ModifiedCount
-                }
+                message = "Username updated successfully.",
+                username = updatedUser.userName,
             });
         }
         catch (Exception ex)
@@ -194,6 +212,7 @@ public class UsersController : ControllerBase
             });
         }
     }
+
 
 
 
