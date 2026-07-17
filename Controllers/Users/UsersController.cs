@@ -103,11 +103,14 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = "Email and Password are required" });
         
         var user = await _mongoService.Users
-                                     .Find(u => (u.email == email && u.password == password))
+                                     .Find(u => (u.email == email))
                                      .FirstOrDefaultAsync();
 
         if (user == null)
             return NotFound(new { message = $"Email '{email}' not found" });
+
+        if (user.password != password)
+            return Unauthorized(new { message = "Incorrect password. Please try again." });
 
         var response = new UserLoginResponse
         {
