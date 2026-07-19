@@ -96,6 +96,45 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [Route("ChangeUserPassword")]
+    public async Task<ActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
+    {
+        // 1. Validate input
+        if (string.IsNullOrWhiteSpace(request.userName) ||
+            string.IsNullOrWhiteSpace(request.currentPassword) ||
+            string.IsNullOrWhiteSpace(request.newPassword))
+            return BadRequest(new { message = "All fields are required" });
+
+        // 2. Find user by userName
+        var user = await _mongoService.Users
+                                     .Find(u => u.userName == request.userName)
+                                     .FirstOrDefaultAsync();
+
+        if (user == null)
+            return NotFound(new { success = false, message = "User not found!" });
+
+        // 3. Match current password
+        if (user.password != request.currentPassword)
+            return Ok(new { success = false, message = "Current password is incorrect" });
+
+        if (request.currentPassword == request.newPassword)
+            return Ok(new { success = false, message = "New password must be different from current password" });
+
+        // 4. Update with new password
+        var update = Builders<UsersDBModel>.Update.Set(u => u.password, request.newPassword);
+        var result = await _mongoService.Users.UpdateOneAsync(
+            u => u.userName == request.userName,
+            update
+        );
+
+        if (result.ModifiedCount > 0)
+            return Ok(new { success = true, message = "Password updated successfully" });
+
+        return Ok(new { success = false, message = "Password update failed! Please try again." });
+    }
+
+
+    [HttpPost]
     [Route("ProcessLoginApproval")]
     public async Task<ActionResult<UsersDBModel>> ProcessLoginApproval(string email,string password)
     {

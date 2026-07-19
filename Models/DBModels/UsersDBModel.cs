@@ -36,6 +36,14 @@ namespace DietManagementWebAPI.Models.DBModels
         public string userName { get; set; }
     }
 
+    public class ChangePasswordRequest
+    {
+        public required string userName { get; set; }
+        public required string currentPassword { get; set; }
+        public required string newPassword { get; set; }
+    }
+
+
     public class RegisterRequest
     {
         // User Table Fields
