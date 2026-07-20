@@ -235,6 +235,11 @@ public class UsersController : ControllerBase
             var mealsUpdate = Builders<UsersMealsData>.Update.Set(m => m.userName, updatedUserName);
             var mealsResult = await _mongoService.UsersMeals.UpdateManyAsync(session, mealsFilter, mealsUpdate);
 
+            // Update UsersWeight
+            var weightFilter = Builders<UserWeightModel>.Filter.Eq(m => m.userName, oldUserName);
+            var weightUpdate = Builders<UserWeightModel>.Update.Set(m => m.userName, updatedUserName);
+            var weightResult = await _mongoService.UserWeightLogs.UpdateManyAsync(session, weightFilter, weightUpdate);
+
             await session.CommitTransactionAsync();
 
             return Ok(new
