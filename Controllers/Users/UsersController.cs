@@ -160,7 +160,6 @@ public class UsersController : ControllerBase
         return Ok(new { success = false, message = "Password update failed! Please try again." });
     }
 
-    [Authorize]
     [HttpPost]
     [Route("ProcessLoginApproval")]
     public async Task<IActionResult> ProcessLoginApproval(string email, string password)
