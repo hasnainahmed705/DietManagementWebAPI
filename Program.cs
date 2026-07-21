@@ -5,11 +5,8 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---- Services ----
-
+// Services
 builder.Services.AddControllers();
-
-// MongoDB Services
 builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddSingleton<QueryBuilderService>();
 
@@ -24,7 +21,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT Authentication Configuration
+// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -43,15 +40,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Swagger with JWT Support
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Diet Management API",
-        Version = "v1"
-    });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Diet Management API", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -67,11 +60,7 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             new List<string>()
         }
@@ -80,8 +69,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ---- Middleware Pipeline ----
-
+// Middleware Pipeline (Important Order)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -89,13 +77,11 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// app.UseHttpsRedirection();   // Disable for Render / reverse proxy
-
 app.UseRouting();
 app.UseCors("AllowAll");
-app.UseAuthentication();
-app.UseMiddleware<JwtValidationMiddleware>();
-app.UseAuthorization();
+app.UseAuthentication();           // ← Ye pehle
+app.UseMiddleware<JwtValidationMiddleware>();  // ← Custom middleware
+app.UseAuthorization();            // ← Phir ye
 
 app.MapControllers();
 app.MapGet("/", () => Results.Ok("API is running"));
