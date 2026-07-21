@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[AllowAnonymous]
 public class GenericController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
