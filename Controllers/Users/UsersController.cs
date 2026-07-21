@@ -42,7 +42,6 @@ public class UsersController : ControllerBase
         return tokenHandler.WriteToken(token);
     }
 
-    [Authorize]
     [HttpPost]
     [Route("RegisterUser")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
@@ -125,7 +124,6 @@ public class UsersController : ControllerBase
         } while (true); // Loop until unique username is found
     }
 
-    [Authorize]
     [HttpPost]
     [Route("ChangeUserPassword")]
     public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
@@ -195,7 +193,6 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
-    [Authorize]
     [HttpPatch]
     [Route("UpdateUserName")]
     public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
@@ -295,7 +292,6 @@ public class UsersController : ControllerBase
 
 
 
-    [Authorize]
     [HttpPut]
     [Route("UpdateUserProfile")]
     public async Task<ActionResult<UserProfileData>> UpdateUserProfile(

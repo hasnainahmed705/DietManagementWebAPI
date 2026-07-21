@@ -16,7 +16,6 @@ public class UserWeightController : ControllerBase
         _mongoService = mongoService;
     }
 
-    [Authorize]
     [HttpPost]
     [Route("AddUserWeightLog")]
     public async Task<IActionResult> AddUserWeightLog(UserWeightModel weight)
