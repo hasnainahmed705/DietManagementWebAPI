@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -20,6 +21,17 @@ public class GenericController : ControllerBase
     [HttpPost("CommonGetGlobal")]
     public async Task<IActionResult> CommonGetGlobal([FromBody] GenericRequest request)
     {
+        Console.WriteLine("=== JWT DEBUG ===");
+        Console.WriteLine($"IsAuthenticated: {User.Identity.IsAuthenticated}");
+        Console.WriteLine($"User Name: {User.FindFirst(ClaimTypes.Name)?.Value}");
+        Console.WriteLine($"Token Present: {Request.Headers["Authorization"].FirstOrDefault()}");
+        Console.WriteLine("==================");
+
+        if (!User.Identity.IsAuthenticated)
+        {
+            return Unauthorized(new { message = "Token invalid or expired" });
+        }
+
         if (string.IsNullOrWhiteSpace(request.apiPathValue))
             return BadRequest(new { message = "Collection name (apiPathValue) is required" });
 
