@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using System;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,15 +15,20 @@ using System.Threading.Tasks;
 public class UsersController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
+    private readonly IConfiguration _configuration;
 
-    public UsersController(MongoDbService mongoService)
+    public UsersController(MongoDbService mongoService, IConfiguration configuration)
     {
         _mongoService = mongoService;
+        _configuration = configuration;
     }
 
     private string GenerateJwtToken(UsersDBModel user)
     {
-        var key = Encoding.ASCII.GetBytes("YourSuperSecretKey1234567890_AtLeast32Chars"); // Move to appsettings
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var key = Encoding.UTF8.GetBytes(
+            _configuration["Jwt:Key"]!);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -31,14 +37,16 @@ public class UsersController : ControllerBase
             new Claim(ClaimTypes.Name, user.userName),
             new Claim(ClaimTypes.Email, user.email)
         }),
+
             Expires = DateTime.UtcNow.AddDays(7),
+
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)
         };
 
-        var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
+
         return tokenHandler.WriteToken(token);
     }
 
