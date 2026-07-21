@@ -124,6 +124,7 @@ public class UsersController : ControllerBase
         } while (true); // Loop until unique username is found
     }
 
+    [Authorize]
     [HttpPost]
     [Route("ChangeUserPassword")]
     public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
@@ -193,6 +194,7 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize]
     [HttpPatch]
     [Route("UpdateUserName")]
     public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
@@ -291,7 +293,7 @@ public class UsersController : ControllerBase
     }
 
 
-
+    [Authorize]
     [HttpPut]
     [Route("UpdateUserProfile")]
     public async Task<ActionResult<UserProfileData>> UpdateUserProfile(
@@ -353,47 +355,6 @@ public class UsersController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
-    [HttpPost("MigratePasswords")]
-    public async Task<IActionResult> MigratePasswords()
-    {
-        try
-        {
-            var users = await _mongoService.Users.Find(_ => true).ToListAsync();
-            int updatedCount = 0;
-
-            foreach (var user in users)
-            {
-                // Skip if password is already hashed (bcrypt hashes start with $2)
-                if (user.password.StartsWith("$2"))
-                    continue;
-
-                // Hash the plain password
-                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(user.password, 12);
-
-                // Update user
-                var update = Builders<UsersDBModel>.Update
-                    .Set(u => u.password, hashedPassword);
-
-                await _mongoService.Users.UpdateOneAsync(
-                    u => u.Id == user.Id,
-                    update);
-
-                updatedCount++;
-            }
-
-            return Ok(new
-            {
-                message = "Password migration completed!",
-                totalUsers = users.Count,
-                updated = updatedCount
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = ex.Message });
         }
     }
 }

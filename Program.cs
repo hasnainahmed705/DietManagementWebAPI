@@ -93,7 +93,8 @@ app.UseSwaggerUI(c =>
 
 app.UseRouting();
 app.UseCors("AllowAll");
-app.UseAuthentication();     // Must be before UseAuthorization
+app.UseAuthentication();
+app.UseMiddleware<JwtValidationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

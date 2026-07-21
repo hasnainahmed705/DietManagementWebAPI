@@ -16,6 +16,7 @@ public class GenericController : ControllerBase
         _queryBuilder = queryBuilder;
     }
 
+    [Authorize]
     [HttpPost("CommonGetGlobal")]
     public async Task<IActionResult> CommonGetGlobal([FromBody] GenericRequest request)
     {
