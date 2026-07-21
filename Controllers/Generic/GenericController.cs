@@ -21,7 +21,17 @@ public class GenericController : ControllerBase
     [HttpPost("CommonGetGlobal")]
     public async Task<IActionResult> CommonGetGlobal([FromBody] GenericRequest request)
     {
-      
+
+        Console.WriteLine("JWT DEBUG =====================");
+        Console.WriteLine($"IsAuthenticated: {User.Identity?.IsAuthenticated}");
+        Console.WriteLine($"Identity Name: {User.Identity?.Name}");
+        Console.WriteLine($"Claims Count: {User.Claims.Count()}");
+        Console.WriteLine($"Authorization Header: {Request.Headers["Authorization"].FirstOrDefault()}");
+        Console.WriteLine("=================================");
+
+        if (!User.Identity.IsAuthenticated)
+            return Unauthorized(new { message = "Token validation failed in backend" });
+
         if (string.IsNullOrWhiteSpace(request.apiPathValue))
             return BadRequest(new { message = "Collection name (apiPathValue) is required" });
 
