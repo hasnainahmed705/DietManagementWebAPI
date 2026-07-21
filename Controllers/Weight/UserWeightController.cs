@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class UserWeightController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
@@ -16,7 +17,6 @@ public class UserWeightController : ControllerBase
         _mongoService = mongoService;
     }
 
-    [Authorize]
     [HttpPost]
     [Route("AddUserWeightLog")]
     public async Task<IActionResult> AddUserWeightLog(UserWeightModel weight)

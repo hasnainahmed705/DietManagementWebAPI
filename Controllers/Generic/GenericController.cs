@@ -6,6 +6,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GenericController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
@@ -17,7 +18,6 @@ public class GenericController : ControllerBase
         _queryBuilder = queryBuilder;
     }
 
-    [Authorize]
     [HttpPost("CommonGetGlobal")]
     public async Task<IActionResult> CommonGetGlobal([FromBody] GenericRequest request)
     {

@@ -132,7 +132,7 @@ public class UsersController : ControllerBase
         } while (true); // Loop until unique username is found
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpPost]
     [Route("ChangeUserPassword")]
     public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
@@ -202,7 +202,7 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpPatch]
     [Route("UpdateUserName")]
     public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
@@ -301,7 +301,7 @@ public class UsersController : ControllerBase
     }
 
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpPut]
     [Route("UpdateUserProfile")]
     public async Task<ActionResult<UserProfileData>> UpdateUserProfile(
