@@ -80,7 +80,6 @@ app.UseSwaggerUI(c =>
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseAuthentication();           // ← Ye pehle
-app.UseMiddleware<JwtValidationMiddleware>();  // ← Custom middleware
 app.UseAuthorization();            // ← Phir ye
 
 app.MapControllers();
