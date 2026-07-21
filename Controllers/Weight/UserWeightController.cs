@@ -1,4 +1,5 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System;
@@ -15,6 +16,7 @@ public class UserWeightController : ControllerBase
         _mongoService = mongoService;
     }
 
+    [Authorize]
     [HttpPost]
     [Route("AddUserWeightLog")]
     public async Task<IActionResult> AddUserWeightLog(UserWeightModel weight)

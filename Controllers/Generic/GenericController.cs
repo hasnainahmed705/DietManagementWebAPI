@@ -1,4 +1,5 @@
 ﻿using DietManagementWebAPI.Controllers.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
@@ -15,6 +16,7 @@ public class GenericController : ControllerBase
         _queryBuilder = queryBuilder;
     }
 
+    [Authorize]
     [HttpPost("CommonGetGlobal")]
     public async Task<IActionResult> CommonGetGlobal([FromBody] GenericRequest request)
     {

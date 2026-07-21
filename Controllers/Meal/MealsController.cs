@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 
 [ApiController]
@@ -21,7 +22,7 @@ public class MealsController : ControllerBase
         return Ok(meals);
     }
 
-    // POST: api/meals/BulkInsertMeals
+    [Authorize]
     [HttpPost]
     [Route("InsertMealsMulti")]
     public async Task<IActionResult> BulkInsert(List<Meal> meals)
@@ -66,6 +67,7 @@ public class MealsController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpPost]
     [Route("InsertUserMeal")]
     public async Task<IActionResult> InsertUserMeal(UsersMealsData meals)
@@ -84,6 +86,7 @@ public class MealsController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpDelete]
     [Route("DeleteUserMeal")]
     public async Task<IActionResult> DeleteUserMeal(string userName, string foodName)

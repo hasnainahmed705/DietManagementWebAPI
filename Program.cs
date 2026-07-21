@@ -9,10 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// MongoDB — singleton because MongoClient is thread-safe and manages its own connection pool
+// MongoDB Services
 builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddSingleton<QueryBuilderService>();
-// CORS — must define the policy before you can call UseCors("AllowAll")
+
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -23,31 +24,34 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// JWT Authentication Configuration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"] ?? "MySuperSecretKey1234567890")),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"] ??
+                "MySuperSecretKey1234567890_AtLeast32CharsLong")),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 builder.Services.AddAuthorization();
 
-// Swagger
+// Swagger with JWT Support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WEBAPI", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Diet Management API",
+        Version = "v1"
+    });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -76,35 +80,27 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// ---- Middleware Pipeline ----
+
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WEBAPI v1");
-    c.RoutePrefix = "swagger"; // → yourapp.onrender.com/swagger
-    c.DefaultModelsExpandDepth(-1);   // hides bottom "Schemas" section entirely
-    c.DefaultModelExpandDepth(-1);    // collapses per-endpoint model tree, keeps example JSON visible
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Diet Management API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
-// ---- Middleware pipeline ----
-
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WEBAPI v1");
-    c.RoutePrefix = "swagger"; // → yourapp.onrender.com/swagger
-});
-
-// app.UseHttpsRedirection(); // Render terminates HTTPS at the edge/load balancer already;
-// leaving this on can cause redirect loops behind Render's proxy
+// app.UseHttpsRedirection();   // Disable for Render / reverse proxy
 
 app.UseRouting();
 app.UseCors("AllowAll");
-app.UseAuthentication();   // must come BEFORE UseAuthorization
+app.UseAuthentication();     // Must be before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/", () => Results.Ok("API is running")); // Render health check
+app.MapGet("/", () => Results.Ok("API is running"));
 
-// Bind to Render's dynamic port
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");

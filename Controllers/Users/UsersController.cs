@@ -1,7 +1,12 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 [ApiController]
@@ -15,6 +20,29 @@ public class UsersController : ControllerBase
         _mongoService = mongoService;
     }
 
+    private string GenerateJwtToken(UsersDBModel user)
+    {
+        var key = Encoding.ASCII.GetBytes("YourSuperSecretKey1234567890_AtLeast32Chars"); // Move to appsettings
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+            new Claim(ClaimTypes.Name, user.userName),
+            new Claim(ClaimTypes.Email, user.email)
+        }),
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    [Authorize]
     [HttpPost]
     [Route("RegisterUser")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
@@ -29,22 +57,24 @@ public class UsersController : ControllerBase
             if (existingEmail != null)
                 return Conflict(new { message = "Email already exists!" });
 
+            // Hash Password
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.password, 12);
+
             // Generate unique username
             string finalUserName = await GenerateUniqueGuestUserNameAsync();
 
-            // Insert into Users Collection
+            // Insert User
             var newUser = new UsersDBModel
             {
                 firstName = request.firstName,
                 lastName = request.lastName,
                 email = request.email,
-                password = request.password,
+                password = hashedPassword,
                 userName = finalUserName
             };
 
             await _mongoService.Users.InsertOneAsync(newUser);
 
-            // Insert into UserProfile Collection
             var newProfile = new UserProfileData
             {
                 userName = finalUserName,
@@ -95,37 +125,34 @@ public class UsersController : ControllerBase
         } while (true); // Loop until unique username is found
     }
 
+    [Authorize]
     [HttpPost]
     [Route("ChangeUserPassword")]
-    public async Task<ActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
+    public async Task<IActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
     {
-        // 1. Validate input
         if (string.IsNullOrWhiteSpace(request.userName) ||
-            string.IsNullOrWhiteSpace(request.currentPassword) ||
-            string.IsNullOrWhiteSpace(request.newPassword))
+        string.IsNullOrWhiteSpace(request.currentPassword) ||
+        string.IsNullOrWhiteSpace(request.newPassword))
             return BadRequest(new { message = "All fields are required" });
-
-        // 2. Find user by userName
-        var user = await _mongoService.Users
-                                     .Find(u => u.userName == request.userName)
-                                     .FirstOrDefaultAsync();
-
-        if (user == null)
-            return NotFound(new { success = false, message = "User not found!" });
-
-        // 3. Match current password
-        if (user.password != request.currentPassword)
-            return Ok(new { success = false, message = "Current password is incorrect" });
 
         if (request.currentPassword == request.newPassword)
             return Ok(new { success = false, message = "New password must be different from current password" });
 
-        // 4. Update with new password
-        var update = Builders<UsersDBModel>.Update.Set(u => u.password, request.newPassword);
+        var user = await _mongoService.Users
+            .Find(u => u.userName == request.userName)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+            return NotFound(new { success = false, message = "User not found!" });
+
+        if (!BCrypt.Net.BCrypt.Verify(request.currentPassword, user.password))
+            return BadRequest(new { success = false, message = "Current password is incorrect" });
+       
+        string newHashedPassword = BCrypt.Net.BCrypt.HashPassword(request.newPassword);
+
+        var update = Builders<UsersDBModel>.Update.Set(u => u.password, newHashedPassword);
         var result = await _mongoService.Users.UpdateOneAsync(
-            u => u.userName == request.userName,
-            update
-        );
+            u => u.userName == request.userName, update);
 
         if (result.ModifiedCount > 0)
             return Ok(new { success = true, message = "Password updated successfully" });
@@ -133,35 +160,43 @@ public class UsersController : ControllerBase
         return Ok(new { success = false, message = "Password update failed! Please try again." });
     }
 
-
+    [Authorize]
     [HttpPost]
     [Route("ProcessLoginApproval")]
-    public async Task<ActionResult<UsersDBModel>> ProcessLoginApproval(string email,string password)
+    public async Task<IActionResult> ProcessLoginApproval(string email, string password)
     {
-        if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(password))
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return BadRequest(new { message = "Email and Password are required" });
-        
+
         var user = await _mongoService.Users
-                                     .Find(u => (u.email == email))
+                                     .Find(u => u.email == email)
                                      .FirstOrDefaultAsync();
 
         if (user == null)
             return NotFound(new { message = $"Email '{email}' not found" });
 
-        if (user.password != password)
+        // Verify hashed password
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.password);
+
+        if (!isPasswordValid)
             return Unauthorized(new { message = "Incorrect password. Please try again." });
+
+        // Generate JWT Token
+        var token = GenerateJwtToken(user);
 
         var response = new UserLoginResponse
         {
             firstName = user.firstName,
             lastName = user.lastName,
             email = user.email,
-            userName = user.userName
+            userName = user.userName,
+            token = token   // ← Return JWT
         };
 
         return Ok(response);
     }
 
+    [Authorize]
     [HttpPatch]
     [Route("UpdateUserName")]
     public async Task<ActionResult<object>> UpdateUserName(string email, string updatedUserName)
@@ -261,7 +296,7 @@ public class UsersController : ControllerBase
 
 
 
-
+    [Authorize]
     [HttpPut]
     [Route("UpdateUserProfile")]
     public async Task<ActionResult<UserProfileData>> UpdateUserProfile(
@@ -326,35 +361,44 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpPost("MigratePasswords")]
+    public async Task<IActionResult> MigratePasswords()
+    {
+        try
+        {
+            var users = await _mongoService.Users.Find(_ => true).ToListAsync();
+            int updatedCount = 0;
 
-    //[HttpPost]
-    //[Route("InsertUserProfile")]
-    //public async Task<IActionResult> InsertUserProfile([FromBody] UserProfileData registerAuth)
-    //{
-    //    var _registerAuth = new UserProfileData
-    //    {
-    //        Goal = registerAuth.Goal,
-    //        userName = registerAuth.userName,
-    //        Gender = registerAuth.Gender,
-    //        FatTargetG = registerAuth.FatTargetG,
-    //        CarbTargetG = registerAuth.CarbTargetG,
-    //        ProteinTargetG = registerAuth.ProteinTargetG,
-    //        HeightCm = registerAuth.HeightCm,
-    //        WeightKg = registerAuth.WeightKg,
-    //        Age = registerAuth.Age,
-    //        DailyCalorieTarget = registerAuth.DailyCalorieTarget,
-    //    };
+            foreach (var user in users)
+            {
+                // Skip if password is already hashed (bcrypt hashes start with $2)
+                if (user.password.StartsWith("$2"))
+                    continue;
 
-    //    await _mongoService.UserProfile.InsertOneAsync(_registerAuth);
+                // Hash the plain password
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(user.password, 12);
 
-    //    return Ok(new { message = "User profile updated successfully!" });
-    //}
+                // Update user
+                var update = Builders<UsersDBModel>.Update
+                    .Set(u => u.password, hashedPassword);
 
-    //[HttpGet]
-    //[Route("GetAllUsers")]
-    //public async Task<ActionResult> GetAllUsers()
-    //{
-    //    var users = await _mongoService.Users.Find(_ => true).ToListAsync();
-    //    return Ok(users);
-    //}
+                await _mongoService.Users.UpdateOneAsync(
+                    u => u.Id == user.Id,
+                    update);
+
+                updatedCount++;
+            }
+
+            return Ok(new
+            {
+                message = "Password migration completed!",
+                totalUsers = users.Count,
+                updated = updatedCount
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 }
