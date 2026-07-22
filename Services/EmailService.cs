@@ -16,6 +16,10 @@ namespace DietManagementWebAPI.Services
         {
             _settings = settings.Value;
             _resend = resend;
+
+            Console.WriteLine(
+        $"Resend Key Loaded: {_settings.ApiKey?.Substring(0, 8)}"
+    );
         }
 
 
