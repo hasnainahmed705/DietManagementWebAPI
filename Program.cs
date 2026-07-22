@@ -94,29 +94,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.Configure<ResendSettings>(
-    builder.Configuration.GetSection("ResendSettings"));
+builder.Services.Configure<ResendClientOptions>(
+    options =>
+    {
+        options.ApiToken =
+            builder.Configuration["ResendSettings:ApiKey"];
+    });
+
+
+builder.Services.AddHttpClient<IResend, ResendClient>();
+
 
 builder.Services.AddTransient<EmailService>();
-
-builder.Services.AddHttpClient<IResend, ResendClient>(
-    (serviceProvider, client) =>
-    {
-        var settings =
-            serviceProvider
-            .GetRequiredService<IOptions<ResendSettings>>()
-            .Value;
-
-        client.BaseAddress =
-            new Uri("https://api.resend.com");
-
-
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue(
-                "Bearer",
-                settings.ApiKey
-            );
-    });
 
 var app = builder.Build();
 
