@@ -29,7 +29,7 @@ namespace DietManagementWebAPI.Services
 
 
             email.From =
-                $"{_settings.SenderName} <{_settings.SenderEmail}>";
+                "Diet Management <no-reply@dietmanagementapp.fit>";
 
 
             email.To.Add(toEmail);
