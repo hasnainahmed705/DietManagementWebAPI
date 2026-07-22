@@ -14,27 +14,35 @@ namespace DietManagementWebAPI.Controllers
             _emailService = emailService;
         }
 
+
         [HttpGet("SendEmail")]
         public async Task<IActionResult> SendEmail()
         {
             try
             {
+                string testEmail = "hasnainwork705@gmail.com";
+                string testOtp = "123456";
+
+
                 await _emailService.SendOtpEmailAsync(
-                    "hasnainwork705@gmail.com",
-                    "123456");
+                    testEmail,
+                    testOtp
+                );
+
 
                 return Ok(new
                 {
-                    Success = true,
-                    Message = "Email sent successfully."
+                    success = true,
+                    message = "Email sent successfully."
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new
                 {
-                    Success = false,
-                    Message = ex.Message
+                    success = false,
+                    message = ex.Message,
+                    detail = ex.InnerException?.Message
                 });
             }
         }
