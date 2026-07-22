@@ -6,8 +6,8 @@ namespace DietManagementWebAPI.Services
 {
     public class EmailService
     {
-        private readonly ResendSettings _settings;
         private readonly IResend _resend;
+        private readonly ResendSettings _settings;
 
 
         public EmailService(
@@ -18,8 +18,8 @@ namespace DietManagementWebAPI.Services
             _resend = resend;
 
             Console.WriteLine(
-        $"Resend Key Loaded: {_settings.ApiKey?.Substring(0, 8)}"
-    );
+    $"Full key length: {_settings.ApiKey?.Length}"
+);
         }
 
 

@@ -1,6 +1,7 @@
 using DietManagementWebAPI.Models;
 using DietManagementWebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
@@ -98,11 +99,24 @@ builder.Services.Configure<ResendSettings>(
 
 builder.Services.AddTransient<EmailService>();
 
-builder.Services.AddOptions();
+builder.Services.AddHttpClient<IResend, ResendClient>(
+    (serviceProvider, client) =>
+    {
+        var settings =
+            serviceProvider
+            .GetRequiredService<IOptions<ResendSettings>>()
+            .Value;
 
-builder.Services.AddHttpClient<ResendClient>();
+        client.BaseAddress =
+            new Uri("https://api.resend.com");
 
-builder.Services.AddTransient<IResend, ResendClient>();
+
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                settings.ApiKey
+            );
+    });
 
 var app = builder.Build();
 
