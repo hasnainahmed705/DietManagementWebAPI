@@ -21,15 +21,15 @@ namespace DietManagementWebAPI.Services
 
 
         public async Task SendEmailAsync(
-            string toEmail,
-            string subject,
-            string htmlMessage)
+     string toEmail,
+     string subject,
+     string htmlMessage)
         {
-
             var email = new EmailMessage();
 
+
             email.From =
-                $"{_settings.SenderName} <{_settings.SenderEmail}>";
+                "Diet Management App <onboarding@resend.dev>";
 
 
             email.To.Add(toEmail);
@@ -39,7 +39,6 @@ namespace DietManagementWebAPI.Services
 
 
             email.HtmlBody = htmlMessage;
-
 
 
             await _resend.EmailSendAsync(email);
