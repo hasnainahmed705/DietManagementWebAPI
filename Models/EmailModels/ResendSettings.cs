@@ -1,4 +1,4 @@
-﻿namespace DietManagementWebAPI.Models
+﻿namespace DietManagementWebAPI.Models.EmailModels
 {
     public class ResendSettings
     {

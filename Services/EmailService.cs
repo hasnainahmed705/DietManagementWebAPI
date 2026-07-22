@@ -1,4 +1,4 @@
-﻿using DietManagementWebAPI.Models;
+﻿using DietManagementWebAPI.Models.EmailModels;
 using Microsoft.Extensions.Options;
 using Resend;
 

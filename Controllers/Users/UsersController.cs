@@ -77,7 +77,8 @@ public class UsersController : ControllerBase
                 lastName = request.lastName,
                 email = request.email,
                 password = hashedPassword,
-                userName = finalUserName
+                userName = finalUserName,
+                twoStepAuth= false
             };
 
             await _mongoService.Users.InsertOneAsync(newUser);
@@ -196,7 +197,8 @@ public class UsersController : ControllerBase
             lastName = user.lastName,
             email = user.email,
             userName = user.userName,
-            token = token   // ← Return JWT
+            token = token,
+            twoStepAuth= user.twoStepAuth
         };
 
         return Ok(response);

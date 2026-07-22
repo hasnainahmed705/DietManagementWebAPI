@@ -26,6 +26,8 @@ namespace DietManagementWebAPI.Models.DBModels
         public string password { get; set; }
 
         public string userName { get; set; } = "";
+
+        public bool twoStepAuth {  get; set; } = false;
     }
 
     public class UserLoginResponse
@@ -35,6 +37,7 @@ namespace DietManagementWebAPI.Models.DBModels
         public string email { get; set; }
         public string userName { get; set; }
         public string token { get; set; }
+        public bool twoStepAuth { get; set; } = false;
     }
 
     public class ChangePasswordRequest
