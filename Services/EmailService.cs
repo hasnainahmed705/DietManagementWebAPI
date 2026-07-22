@@ -38,15 +38,20 @@ namespace DietManagementWebAPI.Services
             };
 
             using var smtp = new SmtpClient();
+            smtp.Timeout = 10000;
+            Console.WriteLine("Connecting to Gmail SMTP...");
 
             await smtp.ConnectAsync(
                 _emailSettings.SmtpServer,
                 _emailSettings.Port,
                 SecureSocketOptions.StartTls);
+            Console.WriteLine("SMTP Connected");
 
             await smtp.AuthenticateAsync(
                 _emailSettings.Username,
                 _emailSettings.Password);
+
+            Console.WriteLine("SMTP Authenticated");
 
             await smtp.SendAsync(email);
 
