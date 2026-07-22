@@ -44,7 +44,7 @@ namespace DietManagementWebAPI.Services
             await smtp.ConnectAsync(
                 _emailSettings.SmtpServer,
                 _emailSettings.Port,
-                SecureSocketOptions.StartTls);
+                SecureSocketOptions.SslOnConnect);
             Console.WriteLine("SMTP Connected");
 
             await smtp.AuthenticateAsync(
