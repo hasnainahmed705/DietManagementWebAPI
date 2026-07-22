@@ -17,9 +17,9 @@ namespace DietManagementWebAPI.Services
             _settings = settings.Value;
             _resend = resend;
 
-            Console.WriteLine(
-    $"Full key length: {_settings.ApiKey?.Length}"
-);
+            Console.WriteLine($"Key length: {_settings.ApiKey.Length}");
+            Console.WriteLine($"First chars: {_settings.ApiKey.Substring(0, 5)}");
+            Console.WriteLine($"Last chars: {_settings.ApiKey.Substring(_settings.ApiKey.Length - 5)}");
         }
 
 
