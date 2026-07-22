@@ -3,6 +3,7 @@ using DietManagementWebAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Resend;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,10 +93,16 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.Configure<EmailSettings>(
-    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<ResendSettings>(
+    builder.Configuration.GetSection("ResendSettings"));
 
 builder.Services.AddTransient<EmailService>();
+
+builder.Services.AddOptions();
+
+builder.Services.AddHttpClient<ResendClient>();
+
+builder.Services.AddTransient<IResend, ResendClient>();
 
 var app = builder.Build();
 

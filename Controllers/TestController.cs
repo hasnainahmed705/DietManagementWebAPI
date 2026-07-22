@@ -20,13 +20,9 @@ namespace DietManagementWebAPI.Controllers
         {
             try
             {
-                string testEmail = "hasnainwork705@gmail.com";
-                string testOtp = "123456";
-
-
                 await _emailService.SendOtpEmailAsync(
-                    testEmail,
-                    testOtp
+                    "hasnainwork705@gmail.com",
+                    "123456"
                 );
 
 
@@ -35,6 +31,7 @@ namespace DietManagementWebAPI.Controllers
                     success = true,
                     message = "Email sent successfully."
                 });
+
             }
             catch (Exception ex)
             {
