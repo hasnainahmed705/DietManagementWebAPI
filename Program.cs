@@ -92,12 +92,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var app = builder.Build();
-
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
 builder.Services.AddTransient<EmailService>();
+
+var app = builder.Build();
 
 // Middleware Pipeline (Important Order)
 app.UseSwagger();

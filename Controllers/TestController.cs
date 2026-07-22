@@ -7,7 +7,7 @@ namespace DietManagementWebAPI.Controllers
     [Route("api/[controller]")]
     public class TestController : ControllerBase
     {
-        private EmailService _emailService;
+        private readonly EmailService _emailService;
 
         public TestController(EmailService emailService)
         {
