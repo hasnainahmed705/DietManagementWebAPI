@@ -72,7 +72,7 @@ namespace DietManagementWebAPI.Services
 
             <p>
                 This OTP will expire in 
-                <b>5 minutes</b>.
+                <b>1 minute</b>.
             </p>
 
 
