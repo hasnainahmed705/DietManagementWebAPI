@@ -1,14 +1,16 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
+using DietManagementWebAPI.Models.EmailModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using System;
-using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -290,6 +292,66 @@ public class UsersController : ControllerBase
                 message = "Username updated successfully.",
                 username = updatedUser.userName,
             });
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            return StatusCode(500, new
+            {
+                message = "Update failed, all changes rolled back",
+                error = ex.Message
+            });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPatch]
+    [Route("UpdateTwoStepAuth")]
+    public async Task<ActionResult<object>> UpdateTwoStepAuth([FromBody] twoStepAuthRequest twoStepAuth)
+    {
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        try
+        {
+            session.StartTransaction();
+
+            var userFilter = Builders<UsersDBModel>.Filter.Eq(u => u.email, twoStepAuth.email)
+                            & Builders<UsersDBModel>.Filter.Eq(u => u.userName, twoStepAuth.userName);
+
+            var userUpdate = Builders<UsersDBModel>.Update.Set(u => u.twoStepAuth, twoStepAuth.twoStepAuth);
+
+            var updatedUser = await _mongoService.Users.FindOneAndUpdateAsync(
+                session,
+                userFilter,
+                userUpdate,
+                new FindOneAndUpdateOptions<UsersDBModel, UsersDBModel>
+                {
+                    ReturnDocument = ReturnDocument.After
+                });
+
+            await session.CommitTransactionAsync();
+
+            if(updatedUser.twoStepAuth)
+            {
+                return Ok(new
+                {
+                    updatedUser.userName,
+                    updatedUser.email,
+                    updatedUser.twoStepAuth,
+                    message = "Two-factor authentication has been enabled successfully."
+                });
+            }
+            else
+            {
+                return Ok(new
+                {
+                    updatedUser.userName,
+                    updatedUser.email,
+                    updatedUser.twoStepAuth,
+                    message = "Two-factor authentication has been disabled successfully."
+                });
+            }
+            
         }
         catch (Exception ex)
         {
