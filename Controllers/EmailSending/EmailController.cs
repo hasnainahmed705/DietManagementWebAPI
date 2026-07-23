@@ -29,7 +29,7 @@ namespace DietManagementWebAPI.Controllers.EmailSending
             {
                 var otp = Random.Shared.Next(100000, 999999).ToString();
                 string createdDateNow = DateTime.UtcNow.ToString();
-                string expiryTimeNow = DateTime.UtcNow.AddSeconds(50).ToString();
+                string expiryTimeNow = DateTime.UtcNow.AddMinutes(3).ToString();
 
                 var existingUser = await _mongoService.Users
                                 .Find(u => u.email == email)
