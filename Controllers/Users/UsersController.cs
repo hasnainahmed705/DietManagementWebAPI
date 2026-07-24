@@ -171,6 +171,33 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [Route("ForgotUserPassword")]
+    public async Task<IActionResult> ForgotUserPassword([FromBody] ForgotPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.userName) ||
+        string.IsNullOrWhiteSpace(request.newPassword))
+            return BadRequest(new { message = "All fields are required" });
+
+        var user = await _mongoService.Users
+            .Find(u => u.userName == request.userName)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+            return NotFound(new { success = false, message = "User not found!" });
+
+        string newHashedPassword = BCrypt.Net.BCrypt.HashPassword(request.newPassword);
+
+        var update = Builders<UsersDBModel>.Update.Set(u => u.password, newHashedPassword);
+        var result = await _mongoService.Users.UpdateOneAsync(
+            u => u.userName == request.userName, update);
+
+        if (result.ModifiedCount > 0)
+            return Ok(new { success = true, message = "Password updated successfully" });
+
+        return Ok(new { success = false, message = "Password update failed! Please try again." });
+    }
+
+    [HttpPost]
     [Route("ProcessLoginApproval")]
     public async Task<IActionResult> ProcessLoginApproval(string email, string password)
     {

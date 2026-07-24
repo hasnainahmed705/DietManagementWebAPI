@@ -47,6 +47,12 @@ namespace DietManagementWebAPI.Models.DBModels
         public required string newPassword { get; set; }
     }
 
+    public class ForgotPasswordRequest
+    {
+        public required string userName { get; set; }
+        public required string newPassword { get; set; }
+    }
+
     public class twoStepAuthRequest
     {
         public required string userName { get; set; }
