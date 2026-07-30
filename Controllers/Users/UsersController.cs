@@ -52,6 +52,13 @@ public class UsersController : ControllerBase
         return tokenHandler.WriteToken(token);
     }
 
+    [HttpGet]
+    [Route("PingCloud")]
+    public async Task<IActionResult> PingCloud()
+    {
+        return Ok("API is running");
+    }
+
     [HttpPost]
     [Route("RegisterUser")]
     public async Task<IActionResult> RegisterUser([FromBody] RegisterRequest request)
