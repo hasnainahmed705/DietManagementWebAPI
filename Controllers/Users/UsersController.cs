@@ -56,7 +56,7 @@ public class UsersController : ControllerBase
     [Route("PingCloud")]
     public async Task<IActionResult> PingCloud()
     {
-        return Ok("API is running");
+        return Ok("API is running!");
     }
 
     [HttpPost]
