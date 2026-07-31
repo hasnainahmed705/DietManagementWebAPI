@@ -71,6 +71,40 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpDelete]
+    [Route("ResetAllData")]
+    public async Task<IActionResult> ResetAllData(string userName)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                return BadRequest(new
+                {
+                    message = "Username is required."
+                });
+            }
+
+            // Delete Weight Logs
+            var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
+            var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
+
+            // Delete User Meals
+            var usersMealsFilter = Builders<UsersMealsData>.Filter.Eq(x => x.userName, userName);
+            var usersMealsResult = await _mongoService.UsersMeals.DeleteManyAsync(usersMealsFilter);
+
+            return Ok("Your account data has been reset successfully.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = "An error occurred while deleting an account.",
+                error = ex.Message
+            });
+        }
+    }
+
     private string GenerateJwtToken(UsersDBModel user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
