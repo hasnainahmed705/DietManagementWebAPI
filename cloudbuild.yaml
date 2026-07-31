@@ -1,0 +1,16 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/dietmanagementapp-501307/diet-api'
+      - '.'
+
+# Push the image to Container Registry
+images:
+  - 'gcr.io/dietmanagementapp-501307/diet-api'
+
+# Required because you're using a custom service account
+options:
+  logging: CLOUD_LOGGING_ONLY
