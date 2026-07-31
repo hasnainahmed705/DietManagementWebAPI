@@ -4,13 +4,32 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/dietmanagementapp-501307/diet-api'
+      - 'us-central1-docker.pkg.dev/dietmanagementapp-501307/cloud-run-source-deploy/diet-management-api:$COMMIT_SHA'
       - '.'
 
-# Push the image to Container Registry
-images:
-  - 'gcr.io/dietmanagementapp-501307/diet-api'
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/dietmanagementapp-501307/cloud-run-source-deploy/diet-management-api:$COMMIT_SHA'
 
-# Required because you're using a custom service account
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'diet-management-api'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/dietmanagementapp-501307/cloud-run-source-deploy/diet-management-api:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'us-central1-docker.pkg.dev/dietmanagementapp-501307/cloud-run-source-deploy/diet-management-api:$COMMIT_SHA'
+
 options:
   logging: CLOUD_LOGGING_ONLY
