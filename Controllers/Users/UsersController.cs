@@ -25,6 +25,52 @@ public class UsersController : ControllerBase
         _configuration = configuration;
     }
 
+    [HttpDelete]
+    [Route("DeleteAllData")]
+    public async Task<IActionResult> DeleteAllData(string userName)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                return BadRequest(new
+                {
+                    message = "Username is required."
+                });
+            }
+
+            // Delete Weight Logs
+            var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
+            var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
+
+            // Delete OTP Records
+            var otpFilter = Builders<UserOtpsModel>.Filter.Eq(x => x.userName, userName);
+            var otpResult = await _mongoService.UserOtps.DeleteManyAsync(otpFilter);
+
+            // Delete User Meals
+            var usersMealsFilter = Builders<UsersMealsData>.Filter.Eq(x => x.userName, userName);
+            var usersMealsResult = await _mongoService.UsersMeals.DeleteManyAsync(usersMealsFilter);
+
+            // Delete User Profile
+            var profileFilter = Builders<UserProfileData>.Filter.Eq(x => x.userName, userName);
+            var profileResult = await _mongoService.UserProfile.DeleteOneAsync(profileFilter);
+
+            // Delete Users
+            var usersFilter = Builders<UsersDBModel>.Filter.Eq(x => x.userName, userName);
+            var usersResult = await _mongoService.Users.DeleteOneAsync(usersFilter);
+
+            return Ok("Your account and all associated data have been successfully deleted.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = "An error occurred while deleting an account.",
+                error = ex.Message
+            });
+        }
+    }
+
     private string GenerateJwtToken(UsersDBModel user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();

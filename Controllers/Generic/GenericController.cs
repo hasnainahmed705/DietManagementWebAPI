@@ -1,4 +1,6 @@
 ﻿using DietManagementWebAPI.Controllers.Generic;
+using DietManagementWebAPI.Models.DBModels;
+using DietManagementWebAPI.Models.EmailModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
