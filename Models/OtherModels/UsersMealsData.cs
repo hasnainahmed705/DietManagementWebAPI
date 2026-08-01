@@ -25,4 +25,5 @@ public class UsersMealsData
     public string BestFor { get; set; } = string.Empty;
     public string MealType { get; set; } = string.Empty;
     public string GlycemicIndex { get; set; } = string.Empty;
+    public required string FoodId { get; set; }
 }

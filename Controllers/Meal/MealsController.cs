@@ -75,6 +75,37 @@ public class MealsController : ControllerBase
 
         try
         {
+            var lastMeal = await _mongoService.UsersMeals
+            .Find(FilterDefinition<UsersMealsData>.Empty)
+            .Sort(Builders<UsersMealsData>.Sort.Descending(x => x.FoodId))
+            .Limit(1)
+            .FirstOrDefaultAsync();
+
+            string nextFoodId;
+
+            if (lastMeal == null || string.IsNullOrEmpty(lastMeal.FoodId))
+            {
+                nextFoodId = "UM000001";          // First record
+            }
+            else
+            {
+                // Extract the number part after "UM"
+                string numberPart = lastMeal.FoodId.Substring(2);
+
+                if (int.TryParse(numberPart, out int lastNumber))
+                {
+                    nextFoodId = $"UM{(lastNumber + 1).ToString("D6")}";  // UM000046 etc.
+                }
+                else
+                {
+                    // Safety fallback if the format is wrong
+                    nextFoodId = "UM000001";
+                }
+            }
+
+            meals.FoodId = nextFoodId;
+            // ===============================================
+
             await _mongoService.UsersMeals.InsertOneAsync(meals);
             return Ok(meals);
         }
@@ -87,10 +118,10 @@ public class MealsController : ControllerBase
     
     [HttpDelete]
     [Route("DeleteUserMeal")]
-    public async Task<IActionResult> DeleteUserMeal(string userName, string foodName)
+    public async Task<IActionResult> DeleteUserMeal(string userName, string foodId)
     {
         var filter = Builders<UsersMealsData>.Filter.Where(
-            u => u.userName == userName && u.FoodName == foodName
+            u => u.userName == userName && u.FoodId == foodId
         );
 
         var meal = await _mongoService.UsersMeals
@@ -98,7 +129,7 @@ public class MealsController : ControllerBase
                                       .FirstOrDefaultAsync();
 
         if (meal == null)
-            return NotFound(new { message = $"Meal: {foodName} not found for the user: {userName}!" });
+            return NotFound(new { message = $"Meal not found for the user: {userName}!" });
 
         try
         {
