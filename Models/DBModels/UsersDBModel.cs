@@ -9,7 +9,20 @@ using System.Threading.Tasks;
 namespace DietManagementWebAPI.Models.DBModels
 {
 
-    public class UsersDBModel
+    public class UsersPreferencesModel
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonIgnoreIfDefault]
+        public string Id { get; set; }
+
+        public required string userName { get; set; }
+        public bool? shareAnalytics { get; set; }
+        public bool? personalizedAds { get; set; }
+        public required string lastUpdated { get; set; }
+    }
+
+        public class UsersDBModel
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]

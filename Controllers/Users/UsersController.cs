@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 using static System.Net.WebRequestMethods;
 
 [ApiController]
@@ -159,6 +160,14 @@ public class UsersController : ControllerBase
             // Generate unique username
             string finalUserName = await GenerateUniqueGuestUserNameAsync();
 
+            var userPref = new UsersPreferencesModel
+            {
+                userName = finalUserName,
+                lastUpdated = DateTime.UtcNow.ToString(),
+                personalizedAds = true,
+                shareAnalytics = false
+            };
+
             // Insert User
             var newUser = new UsersDBModel
             {
@@ -187,6 +196,8 @@ public class UsersController : ControllerBase
             };
 
             await _mongoService.UserProfile.InsertOneAsync(newProfile);
+
+            await _mongoService.UserPreferences.InsertOneAsync(userPref);
 
             return Ok(new
             {
@@ -537,6 +548,58 @@ public class UsersController : ControllerBase
                                                 .FirstOrDefaultAsync();
 
             return Ok(updatedUser);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPatch]
+    [Route("UpdateUserPreferences")]
+    public async Task<ActionResult<UserProfileData>> UpdateUserPreferences(
+    string userName,
+    [FromBody] UsersPreferencesModel usersPreferences)
+    {
+        FilterDefinition<UsersPreferencesModel>? prefFilter = null;
+        UpdateDefinition<UsersPreferencesModel>? prefUpdate = null;
+
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        try
+        {
+            session.StartTransaction();
+
+            if(usersPreferences.shareAnalytics==null && usersPreferences.personalizedAds != null)
+            {
+                prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(u => u.userName, userName);
+                prefUpdate = Builders<UsersPreferencesModel>.Update.Set(u => u.personalizedAds, usersPreferences.personalizedAds)
+                    .Set(u => u.lastUpdated, usersPreferences.lastUpdated);
+            }
+            else if (usersPreferences.shareAnalytics != null && usersPreferences.personalizedAds == null)
+            {
+                prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(u => u.userName, userName);
+                prefUpdate = Builders<UsersPreferencesModel>.Update.Set(u => u.shareAnalytics, usersPreferences.shareAnalytics)
+                    .Set(u => u.lastUpdated, usersPreferences.lastUpdated);
+            }
+
+            var updatedPref = await _mongoService.UserPreferences.FindOneAndUpdateAsync(
+                session,
+                prefFilter,
+                prefUpdate,
+                new FindOneAndUpdateOptions<UsersPreferencesModel, UsersPreferencesModel>
+                {
+                    ReturnDocument = ReturnDocument.After
+                });
+
+            await session.CommitTransactionAsync();
+
+            return Ok(new { 
+                userName = updatedPref.userName,
+                shareAnalytics=updatedPref.shareAnalytics,
+                personalizedAds=updatedPref.personalizedAds
+            });
         }
         catch (Exception ex)
         {
