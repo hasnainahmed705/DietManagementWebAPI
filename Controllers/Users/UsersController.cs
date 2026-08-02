@@ -558,52 +558,101 @@ public class UsersController : ControllerBase
     [AllowAnonymous]
     [HttpPatch]
     [Route("UpdateUserPreferences")]
-    public async Task<ActionResult<UserProfileData>> UpdateUserPreferences(
-    string userName,
-    [FromBody] UsersPreferencesModel usersPreferences)
+    public async Task<ActionResult> UpdateUserPreferences(
+    [FromQuery] string userName,
+    [FromBody] UpdateUserPreferencesRequest request)
     {
-        FilterDefinition<UsersPreferencesModel>? prefFilter = null;
-        UpdateDefinition<UsersPreferencesModel>? prefUpdate = null;
-
         using var session = await _mongoService.Client.StartSessionAsync();
 
         try
         {
             session.StartTransaction();
 
-            if(usersPreferences.shareAnalytics==null && usersPreferences.personalizedAds != null)
+            // Check whether at least one field is provided
+            if (!request.shareAnalytics.HasValue &&
+                !request.personalizedAds.HasValue)
             {
-                prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(u => u.userName, userName);
-                prefUpdate = Builders<UsersPreferencesModel>.Update.Set(u => u.personalizedAds, usersPreferences.personalizedAds)
-                    .Set(u => u.lastUpdated, usersPreferences.lastUpdated);
-            }
-            else if (usersPreferences.shareAnalytics != null && usersPreferences.personalizedAds == null)
-            {
-                prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(u => u.userName, userName);
-                prefUpdate = Builders<UsersPreferencesModel>.Update.Set(u => u.shareAnalytics, usersPreferences.shareAnalytics)
-                    .Set(u => u.lastUpdated, usersPreferences.lastUpdated);
+                return BadRequest(new
+                {
+                    error = "Please provide at least one preference to update."
+                });
             }
 
-            var updatedPref = await _mongoService.UserPreferences.FindOneAndUpdateAsync(
-                session,
-                prefFilter,
-                prefUpdate,
-                new FindOneAndUpdateOptions<UsersPreferencesModel, UsersPreferencesModel>
+            var filter = Builders<UsersPreferencesModel>.Filter.Eq(
+                x => x.userName,
+                userName);
+
+            var updates = new List<UpdateDefinition<UsersPreferencesModel>>();
+
+            if (request.shareAnalytics.HasValue)
+            {
+                updates.Add(
+                    Builders<UsersPreferencesModel>.Update.Set(
+                        x => x.shareAnalytics,
+                        request.shareAnalytics.Value));
+            }
+
+            if (request.personalizedAds.HasValue)
+            {
+                updates.Add(
+                    Builders<UsersPreferencesModel>.Update.Set(
+                        x => x.personalizedAds,
+                        request.personalizedAds.Value));
+            }
+
+            // Always update timestamp
+            updates.Add(
+                Builders<UsersPreferencesModel>.Update.Set(
+                    x => x.lastUpdated,
+                    DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")));
+
+            var updateDefinition =
+                Builders<UsersPreferencesModel>.Update.Combine(updates);
+
+            var options = new FindOneAndUpdateOptions<UsersPreferencesModel>
+            {
+                ReturnDocument = ReturnDocument.After
+            };
+
+            var updatedPreference =
+                await _mongoService.UserPreferences.FindOneAndUpdateAsync(
+                    session,
+                    filter,
+                    updateDefinition,
+                    options);
+
+            if (updatedPreference == null)
+            {
+                await session.AbortTransactionAsync();
+
+                return NotFound(new
                 {
-                    ReturnDocument = ReturnDocument.After
+                    error = $"No preferences found for user '{userName}'."
                 });
+            }
 
             await session.CommitTransactionAsync();
 
-            return Ok(new { 
-                userName = updatedPref.userName,
-                shareAnalytics=updatedPref.shareAnalytics,
-                personalizedAds=updatedPref.personalizedAds
+            return Ok(new
+            {
+                message = "Preferences updated successfully.",
+                data = new
+                {
+                    updatedPreference.userName,
+                    updatedPreference.shareAnalytics,
+                    updatedPreference.personalizedAds,
+                    updatedPreference.lastUpdated
+                }
             });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            await session.AbortTransactionAsync();
+
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
 }

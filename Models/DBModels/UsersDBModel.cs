@@ -8,18 +8,27 @@ using System.Threading.Tasks;
 
 namespace DietManagementWebAPI.Models.DBModels
 {
+    public class UpdateUserPreferencesRequest
+    {
+        public bool? shareAnalytics { get; set; }
+
+        public bool? personalizedAds { get; set; }
+    }
 
     public class UsersPreferencesModel
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         [BsonIgnoreIfDefault]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         public required string userName { get; set; }
+
         public bool? shareAnalytics { get; set; }
+
         public bool? personalizedAds { get; set; }
-        public required string lastUpdated { get; set; }
+
+        public string? lastUpdated { get; set; }
     }
 
         public class UsersDBModel
