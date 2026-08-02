@@ -1,5 +1,6 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using DietManagementWebAPI.Models.EmailModels;
+using DietManagementWebAPI.Models.OtherModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +47,12 @@ public class UsersController : ControllerBase
 
             var prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(x => x.userName, userName);
             var prefResult = await _mongoService.UserPreferences.DeleteManyAsync(prefFilter);
+
+            var workoutSessionFilter = Builders<WorkoutSessionModel>.Filter.Eq(x => x.userName, userName);
+            var workoutSessionResult = await _mongoService.WorkoutSessions.DeleteManyAsync(workoutSessionFilter);
+
+            var workoutLogsFilter = Builders<WorkoutExerciseModel>.Filter.Eq(x => x.userName, userName);
+            var workoutLogsResult = await _mongoService.WorkoutExerciseLogs.DeleteManyAsync(workoutLogsFilter);
 
             // Delete OTP Records
             var otpFilter = Builders<UserOtpsModel>.Filter.Eq(x => x.userName, userName);
@@ -96,6 +103,12 @@ public class UsersController : ControllerBase
             // Delete User Meals
             var usersMealsFilter = Builders<UsersMealsData>.Filter.Eq(x => x.userName, userName);
             var usersMealsResult = await _mongoService.UsersMeals.DeleteManyAsync(usersMealsFilter);
+
+            var workoutSessionFilter = Builders<WorkoutSessionModel>.Filter.Eq(x => x.userName, userName);
+            var workoutSessionResult = await _mongoService.WorkoutSessions.DeleteManyAsync(workoutSessionFilter);
+
+            var workoutLogsFilter = Builders<WorkoutExerciseModel>.Filter.Eq(x => x.userName, userName);
+            var workoutLogsResult = await _mongoService.WorkoutExerciseLogs.DeleteManyAsync(workoutLogsFilter);
 
             return Ok("Your account data has been reset successfully.");
         }
@@ -416,6 +429,14 @@ public class UsersController : ControllerBase
             var userPrefFilter = Builders<UsersPreferencesModel>.Filter.Eq(m => m.userName, oldUserName);
             var userPrefUpdate = Builders<UsersPreferencesModel>.Update.Set(m => m.userName, updatedUserName);
             var userPrefResult = await _mongoService.UserPreferences.UpdateManyAsync(session, userPrefFilter, userPrefUpdate);
+
+            var workoutSessionFilter = Builders<WorkoutSessionModel>.Filter.Eq(m => m.userName, oldUserName);
+            var workoutSessionUpdate = Builders<WorkoutSessionModel>.Update.Set(m => m.userName, updatedUserName);
+            var workoutSessionResult = await _mongoService.WorkoutSessions.UpdateManyAsync(session, workoutSessionFilter, workoutSessionUpdate);
+
+            var workoutLogsFilter = Builders<WorkoutExerciseModel>.Filter.Eq(m => m.userName, oldUserName);
+            var workoutLogsUpdate = Builders<WorkoutExerciseModel>.Update.Set(m => m.userName, updatedUserName);
+            var workoutLogsResult = await _mongoService.WorkoutExerciseLogs.UpdateManyAsync(session, workoutLogsFilter, workoutLogsUpdate);
 
             await session.CommitTransactionAsync();
 

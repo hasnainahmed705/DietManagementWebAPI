@@ -1,5 +1,6 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using DietManagementWebAPI.Models.EmailModels;
+using DietManagementWebAPI.Models.OtherModels;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 
@@ -38,4 +39,6 @@ public class MongoDbService
     public IMongoCollection<UserWeightModel> UserWeightLogs => _database.GetCollection<UserWeightModel>("UserWeightLogs");
     public IMongoCollection<UserOtpsModel> UserOtps => _database.GetCollection<UserOtpsModel>("UserOtps");
     public IMongoCollection<UsersPreferencesModel> UserPreferences => _database.GetCollection<UsersPreferencesModel>("UserPreferences");
+    public IMongoCollection<WorkoutSessionModel> WorkoutSessions => _database.GetCollection<WorkoutSessionModel>("WorkoutSessions");
+    public IMongoCollection<WorkoutExerciseModel> WorkoutExerciseLogs => _database.GetCollection<WorkoutExerciseModel>("WorkoutExerciseLogs");
 }
