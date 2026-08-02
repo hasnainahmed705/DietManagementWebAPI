@@ -44,6 +44,9 @@ public class UsersController : ControllerBase
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
             var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
 
+            var prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(x => x.userName, userName);
+            var prefResult = await _mongoService.UserPreferences.DeleteManyAsync(prefFilter);
+
             // Delete OTP Records
             var otpFilter = Builders<UserOtpsModel>.Filter.Eq(x => x.userName, userName);
             var otpResult = await _mongoService.UserOtps.DeleteManyAsync(otpFilter);
@@ -409,6 +412,10 @@ public class UsersController : ControllerBase
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(m => m.userName, oldUserName);
             var weightUpdate = Builders<UserWeightModel>.Update.Set(m => m.userName, updatedUserName);
             var weightResult = await _mongoService.UserWeightLogs.UpdateManyAsync(session, weightFilter, weightUpdate);
+
+            var userPrefFilter = Builders<UsersPreferencesModel>.Filter.Eq(m => m.userName, oldUserName);
+            var userPrefUpdate = Builders<UsersPreferencesModel>.Update.Set(m => m.userName, updatedUserName);
+            var userPrefResult = await _mongoService.UserPreferences.UpdateManyAsync(session, userPrefFilter, userPrefUpdate);
 
             await session.CommitTransactionAsync();
 
