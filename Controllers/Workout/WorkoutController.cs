@@ -172,4 +172,69 @@ public class WorkoutController : ControllerBase
             });
         }
     }
+
+    [HttpPost]
+    [Route("InsertWorkoutBurnCalories")]
+    public async Task<ActionResult> InsertWorkoutBurnCalories(
+    [FromBody] WorkoutBurnCaloriesRequest request)
+    {
+        if (request == null)
+        {
+            return BadRequest(new
+            {
+                error = "Request body cannot be empty."
+            });
+        }
+
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        try
+        {
+            session.StartTransaction();
+
+            var currentDate = DateTime.Parse(request.date).Date;
+
+            var filter =
+                Builders<WorkoutBurnCaloriesModel>.Filter.Eq(x => x.userName, request.userName) &
+                Builders<WorkoutBurnCaloriesModel>.Filter.Eq(x => x.muscleGroupName, request.muscleGroupName) &
+                Builders<WorkoutBurnCaloriesModel>.Filter.Gte(
+                    x => x.date,
+                    currentDate.ToString("yyyy-MM-ddT00:00:00Z")) &
+                Builders<WorkoutBurnCaloriesModel>.Filter.Lt(
+                    x => x.date,
+                    currentDate.AddDays(1).ToString("yyyy-MM-ddT00:00:00Z"));
+
+            await _mongoService.WorkoutBurnCalories.DeleteManyAsync(
+                session,
+                filter);
+
+            var workoutBurnCalories = new WorkoutBurnCaloriesModel
+            {
+                userName = request.userName,
+                date = request.date,
+                muscleGroupName = request.muscleGroupName,
+                caloriesBurned = request.caloriesBurned
+            };
+
+            await _mongoService.WorkoutBurnCalories.InsertOneAsync(
+                session,
+                workoutBurnCalories);
+
+            await session.CommitTransactionAsync();
+
+            return Ok(new
+            {
+                message = $"You have burned {workoutBurnCalories.caloriesBurned} calories."
+            });
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
+        }
+    }
 }

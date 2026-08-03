@@ -41,4 +41,5 @@ public class MongoDbService
     public IMongoCollection<UsersPreferencesModel> UserPreferences => _database.GetCollection<UsersPreferencesModel>("UserPreferences");
     public IMongoCollection<WorkoutSessionModel> WorkoutSessions => _database.GetCollection<WorkoutSessionModel>("WorkoutSessions");
     public IMongoCollection<WorkoutExerciseModel> WorkoutExerciseLogs => _database.GetCollection<WorkoutExerciseModel>("WorkoutExerciseLogs");
+    public IMongoCollection<WorkoutBurnCaloriesModel> WorkoutBurnCalories => _database.GetCollection<WorkoutBurnCaloriesModel>("WorkoutBurnCalories");
 }

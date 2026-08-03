@@ -99,4 +99,28 @@ namespace DietManagementWebAPI.Models.OtherModels
 
         public bool isCompleted { get; set; }
     }
+
+    public class WorkoutBurnCaloriesModel
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonIgnoreIfDefault]
+        public string? Id { get; set; }
+        public required string userName { get; set; }
+
+        public required string muscleGroupName { get; set; }
+
+        public double caloriesBurned { get; set; }
+        public required string date { get; set; }
+    }
+
+    public class WorkoutBurnCaloriesRequest
+    {
+        public required string userName { get; set; }
+
+        public required string muscleGroupName { get; set; }
+
+        public double caloriesBurned { get; set; }
+        public required string date { get; set; }
+    }
 }
