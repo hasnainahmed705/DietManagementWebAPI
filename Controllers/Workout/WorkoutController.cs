@@ -26,6 +26,43 @@ public class WorkoutController : ControllerBase
         {
             session.StartTransaction();
 
+            var currentDate = DateTime.Parse(request.startTime).Date;
+
+            var filter =
+                Builders<WorkoutSessionModel>.Filter.Eq(x => x.userName, request.userName) &
+                Builders<WorkoutSessionModel>.Filter.Eq(x => x.sessionName, request.sessionName) &
+                Builders<WorkoutSessionModel>.Filter.Eq(x => x.muscleGroupName, request.muscleGroupName) &
+                Builders<WorkoutSessionModel>.Filter.Gte(
+                    x => x.startTime,
+                    currentDate.ToString("yyyy-MM-ddT00:00:00Z")) &
+                Builders<WorkoutSessionModel>.Filter.Lt(
+                    x => x.startTime,
+                    currentDate.AddDays(1).ToString("yyyy-MM-ddT00:00:00Z"));
+
+            var existingSession = await _mongoService.WorkoutSessions
+                .Find(session, filter)
+                .FirstOrDefaultAsync();
+
+            if (existingSession != null)
+            {
+                // Only update endTime
+                var update = Builders<WorkoutSessionModel>.Update
+                    .Set(x => x.endTime, request.endTime);
+
+                await _mongoService.WorkoutSessions.UpdateOneAsync(
+                    session,
+                    filter,
+                    update);
+
+                await session.CommitTransactionAsync();
+
+                return Ok(new
+                {
+                    message = "Workout session end time updated successfully."
+                });
+            }
+
+            // Insert new record
             var workoutSession = new WorkoutSessionModel
             {
                 userName = request.userName,
@@ -79,6 +116,26 @@ public class WorkoutController : ControllerBase
         {
             session.StartTransaction();
 
+            foreach (var request in requests)
+            {
+                var currentDate = DateTime.Parse(request.date).Date;
+
+                var filter =
+                    Builders<WorkoutExerciseModel>.Filter.Eq(x => x.userName, request.userName) &
+                    Builders<WorkoutExerciseModel>.Filter.Eq(x => x.exerciseName, request.exerciseName) &
+                    Builders<WorkoutExerciseModel>.Filter.Eq(x => x.sessionName, request.sessionName) &
+                    Builders<WorkoutExerciseModel>.Filter.Gte(
+                        x => x.date,
+                        currentDate.ToString("yyyy-MM-ddT00:00:00Z")) &
+                    Builders<WorkoutExerciseModel>.Filter.Lt(
+                        x => x.date,
+                        currentDate.AddDays(1).ToString("yyyy-MM-ddT00:00:00Z"));
+
+                await _mongoService.WorkoutExerciseLogs.DeleteManyAsync(
+                    session,
+                    filter);
+            }
+
             var workoutExercises = requests.Select(request => new WorkoutExerciseModel
             {
                 sessionName = request.sessionName,
@@ -102,9 +159,7 @@ public class WorkoutController : ControllerBase
 
             return Ok(new
             {
-                message = $"{workoutExercises.Count} workout exercise(s) inserted successfully.",
-                insertedCount = workoutExercises.Count,
-                data = workoutExercises
+                message = $"{workoutExercises.Count} workout exercise(s) inserted successfully."
             });
         }
         catch (Exception ex)
