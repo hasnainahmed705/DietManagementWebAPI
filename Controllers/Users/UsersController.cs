@@ -45,6 +45,9 @@ public class UsersController : ControllerBase
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
             var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
 
+            var burnCaloriesFilter = Builders<WorkoutBurnCaloriesModel>.Filter.Eq(x => x.userName, userName);
+            var burnCaloriesResult = await _mongoService.WorkoutBurnCalories.DeleteManyAsync(burnCaloriesFilter);
+
             var prefFilter = Builders<UsersPreferencesModel>.Filter.Eq(x => x.userName, userName);
             var prefResult = await _mongoService.UserPreferences.DeleteManyAsync(prefFilter);
 
@@ -109,6 +112,9 @@ public class UsersController : ControllerBase
 
             var workoutLogsFilter = Builders<WorkoutExerciseModel>.Filter.Eq(x => x.userName, userName);
             var workoutLogsResult = await _mongoService.WorkoutExerciseLogs.DeleteManyAsync(workoutLogsFilter);
+
+            var burnCaloriesFilter = Builders<WorkoutBurnCaloriesModel>.Filter.Eq(x => x.userName, userName);
+            var burnCaloriesResult = await _mongoService.WorkoutBurnCalories.DeleteManyAsync(burnCaloriesFilter);
 
             return Ok("Your account data has been reset successfully.");
         }
@@ -437,6 +443,10 @@ public class UsersController : ControllerBase
             var workoutLogsFilter = Builders<WorkoutExerciseModel>.Filter.Eq(m => m.userName, oldUserName);
             var workoutLogsUpdate = Builders<WorkoutExerciseModel>.Update.Set(m => m.userName, updatedUserName);
             var workoutLogsResult = await _mongoService.WorkoutExerciseLogs.UpdateManyAsync(session, workoutLogsFilter, workoutLogsUpdate);
+
+            var burnCaloriesFilter = Builders<WorkoutBurnCaloriesModel>.Filter.Eq(m => m.userName, oldUserName);
+            var burnCaloriesUpdate = Builders<WorkoutBurnCaloriesModel>.Update.Set(m => m.userName, updatedUserName);
+            var burnCaloriesResult = await _mongoService.WorkoutBurnCalories.UpdateManyAsync(session, burnCaloriesFilter, burnCaloriesUpdate);
 
             await session.CommitTransactionAsync();
 
