@@ -190,6 +190,15 @@ public class UsersController : ControllerBase
                 shareAnalytics = false
             };
 
+            var notificationsPref = new NotificationsResponseModel
+            {
+                userName = finalUserName,
+                waterReminders = true,
+                workoutAlerts = true,
+                mealReminders = true,
+                promotionOffers = true
+            };
+
             // Insert User
             var newUser = new UsersDBModel
             {
@@ -220,6 +229,8 @@ public class UsersController : ControllerBase
             await _mongoService.UserProfile.InsertOneAsync(newProfile);
 
             await _mongoService.UserPreferences.InsertOneAsync(userPref);
+
+            await _mongoService.NotificationsPreferences.InsertOneAsync(notificationsPref);
 
             return Ok(new
             {
