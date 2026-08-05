@@ -48,6 +48,7 @@ namespace DietManagementWebAPI.Models.DBModels
         public string password { get; set; }
 
         public string userName { get; set; } = "";
+        public string fcmToken { get; set; } = "";
 
         public bool twoStepAuth {  get; set; } = false;
     }
@@ -59,6 +60,8 @@ namespace DietManagementWebAPI.Models.DBModels
         public string email { get; set; }
         public string userName { get; set; }
         public string token { get; set; }
+        public string fcmToken { get; set; }
+
         public bool twoStepAuth { get; set; } = false;
     }
 
@@ -80,6 +83,12 @@ namespace DietManagementWebAPI.Models.DBModels
         public required string userName { get; set; }
         public required string email { get; set; }
         public required bool twoStepAuth { get; set; }
+    }
+
+    public class UpdateFcmTokenRequest
+    {
+        public string email { get; set; } = string.Empty;
+        public string fcmToken { get; set; } = string.Empty;
     }
 
 

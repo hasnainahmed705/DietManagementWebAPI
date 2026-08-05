@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -207,7 +208,7 @@ public class UsersController : ControllerBase
                 email = request.email,
                 password = hashedPassword,
                 userName = finalUserName,
-                twoStepAuth= false
+                twoStepAuth= false,
             };
 
             await _mongoService.Users.InsertOneAsync(newUser);
@@ -360,10 +361,43 @@ public class UsersController : ControllerBase
             email = user.email,
             userName = user.userName,
             token = token,
-            twoStepAuth= user.twoStepAuth
+            twoStepAuth= user.twoStepAuth,
+            fcmToken= user.fcmToken,
         };
 
         return Ok(response);
+    }
+
+    [HttpPost]
+    [Route("UpdateFcmToken")]
+    public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenRequest request)
+    {
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        try
+        {
+            session.StartTransaction();
+            // 2. Find the user by their email (or ID)
+            var filter = Builders<UsersDBModel>.Filter.Eq("email", request.email);
+
+            // 3. Update the fcmToken field
+            var update = Builders<UsersDBModel>.Update.Set("fcmToken", request.fcmToken);
+            // 4. Execute the update in MongoDB
+            var result = await _mongoService.Users.UpdateOneAsync(filter, update);
+            if (result.MatchedCount == 0)
+            {
+                return NotFound(new { error = "User not found." });
+            }
+
+            await session.CommitTransactionAsync();
+
+            return Ok(new { success = true, message = "FCM token updated successfully." });
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [AllowAnonymous]

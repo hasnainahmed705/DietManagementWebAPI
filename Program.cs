@@ -6,8 +6,23 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var firebaseCredentialPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "Firebase",
+    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92"   // ← change to your real file name
+);
+
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = CredentialFactory
+        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
+        .ToGoogleCredential()
+});
 
 // Services
 builder.Services.AddControllers();
@@ -106,6 +121,7 @@ builder.Services.AddHttpClient<IResend, ResendClient>();
 
 
 builder.Services.AddTransient<EmailService>();
+builder.Services.AddSingleton<FirebaseNotificationService>();
 
 var app = builder.Build();
 
