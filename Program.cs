@@ -11,18 +11,18 @@ using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var firebaseCredentialPath = Path.Combine(
-    builder.Environment.ContentRootPath,
-    "Firebase",
-    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"   // ← change to your real file name
-);
+//var firebaseCredentialPath = Path.Combine(
+//    builder.Environment.ContentRootPath,
+//    "Firebase",
+//    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"   // ← change to your real file name
+//);
 
-FirebaseApp.Create(new AppOptions()
-{
-    Credential = CredentialFactory
-        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
-        .ToGoogleCredential()
-});
+//FirebaseApp.Create(new AppOptions()
+//{
+//    Credential = CredentialFactory
+//        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
+//        .ToGoogleCredential()
+//});
 
 // Services
 builder.Services.AddControllers();
