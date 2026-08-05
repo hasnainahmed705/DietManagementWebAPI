@@ -108,6 +108,9 @@ namespace DietManagementWebAPI.Models.DBModels
         public string? CarbTargetG { get; set; }
 
         public string? FatTargetG { get; set; }
+        public string GymTiming { get; set; } = "";
+
+        public bool isPerformGym { get; set; }
     }
 
     public class UserProfileData
@@ -135,6 +138,9 @@ namespace DietManagementWebAPI.Models.DBModels
         public string? CarbTargetG { get; set; }
 
         public string? FatTargetG { get; set; }
+        public string GymTiming { get; set; } = "";
+
+        public bool? isPerformGym { get; set; }
     }
 
     public class UserProfileUpdateDto
@@ -148,5 +154,8 @@ namespace DietManagementWebAPI.Models.DBModels
         public string? ProteinTargetG { get; set; }
         public string? CarbTargetG { get; set; }
         public string? FatTargetG { get; set; }
+        public string GymTiming { get; set; } = "";
+
+        public bool? isPerformGym { get; set; }
     }
 }

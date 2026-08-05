@@ -223,7 +223,9 @@ public class UsersController : ControllerBase
                 HeightCm = request.HeightCm,
                 WeightKg = request.WeightKg,
                 Age = request.Age,
-                DailyCalorieTarget = request.DailyCalorieTarget
+                DailyCalorieTarget = request.DailyCalorieTarget,
+                GymTiming = request.GymTiming,
+                isPerformGym = request.isPerformGym,
             };
 
             await _mongoService.UserProfile.InsertOneAsync(newProfile);
@@ -572,6 +574,8 @@ public class UsersController : ControllerBase
             if (profileData.ProteinTargetG != null) updates.Add(updateBuilder.Set(u => u.ProteinTargetG, profileData.ProteinTargetG));
             if (profileData.CarbTargetG != null) updates.Add(updateBuilder.Set(u => u.CarbTargetG, profileData.CarbTargetG));
             if (profileData.FatTargetG != null) updates.Add(updateBuilder.Set(u => u.FatTargetG, profileData.FatTargetG));
+            if (profileData.GymTiming != null) updates.Add(updateBuilder.Set(u => u.GymTiming, profileData.GymTiming));
+            if (profileData.isPerformGym != null) updates.Add(updateBuilder.Set(u => u.isPerformGym, profileData.isPerformGym));
 
             if (updates.Count == 0)
             {
