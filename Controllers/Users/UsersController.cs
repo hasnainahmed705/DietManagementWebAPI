@@ -378,7 +378,7 @@ public class UsersController : ControllerBase
         {
             session.StartTransaction();
             // 2. Find the user by their email (or ID)
-            var filter = Builders<UsersDBModel>.Filter.Eq("email", request.email);
+            var filter = Builders<UsersDBModel>.Filter.Eq("email", request.email); 
 
             // 3. Update the fcmToken field
             var update = Builders<UsersDBModel>.Update.Set("fcmToken", request.fcmToken);
