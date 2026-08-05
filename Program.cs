@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 var firebaseCredentialPath = Path.Combine(
     builder.Environment.ContentRootPath,
     "Firebase",
-    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92"   // ← change to your real file name
+    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"   // ← change to your real file name
 );
 
 FirebaseApp.Create(new AppOptions()
