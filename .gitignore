@@ -4,8 +4,7 @@
 ## Get latest from `dotnet new gitignore`
 
 # Firebase credentials
-Firebase/macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json
-Firebase/*.json
+Firebase/
 
 # dotenv files
 .env

@@ -11,6 +11,13 @@ using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
 
+string firebaseCredentialPath = "/secrets/firebase-adminsdk.json";
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = CredentialFactory
+        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
+        .ToGoogleCredential()
+});
 //var firebaseCredentialPath = Path.Combine(
 //    builder.Environment.ContentRootPath,
 //    "Firebase",
