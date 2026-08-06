@@ -27,6 +27,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--update-secrets=/secrets/firebase-adminsdk.json=firebase-adminsdk:latest'
 
 images:
   - 'us-central1-docker.pkg.dev/dietmanagementapp-501307/cloud-run-source-deploy/diet-management-api:$COMMIT_SHA'
