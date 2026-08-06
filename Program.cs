@@ -19,13 +19,39 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string firebaseCredentialPath = "/secrets/firebase-adminsdk.json";
-FirebaseApp.Create(new AppOptions()
+string firebaseCredentialPath;
+
+if (File.Exists("/secrets/firebase-adminsdk.json"))
 {
-    Credential = CredentialFactory
-        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
-        .ToGoogleCredential()
-});
+    firebaseCredentialPath = "/secrets/firebase-adminsdk.json";
+    Console.WriteLine("Using Cloud Run secret: /secrets/firebase-adminsdk.json");
+}
+else
+{
+    // Fallback for local + temporary for Cloud Run until secret is mounted
+    firebaseCredentialPath = Path.Combine(
+        builder.Environment.ContentRootPath,
+        "Firebase",
+        "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"
+    );
+    Console.WriteLine($"Secret not found. Using fallback: {firebaseCredentialPath}");
+}
+
+try
+{
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = CredentialFactory
+            .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
+            .ToGoogleCredential()
+    });
+    Console.WriteLine("Firebase Admin initialized successfully");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Firebase initialization failed: {ex.Message}");
+    // Don't crash the app — continue without Firebase for now
+}
 
 //var firebaseCredentialPath = Path.Combine(
 //    builder.Environment.ContentRootPath,
