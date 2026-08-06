@@ -167,9 +167,12 @@ builder.Services.AddSingleton<FirebaseNotificationService>();
 
 // --- NEW HANGFIRE CONFIGURATION ---
 // Get MongoDB Connection String from appsettings.json
-var mongoConnectionString = builder.Configuration["MongoDB:ConnectionString"]
+var mongoConnectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
+                            ?? builder.Configuration.GetConnectionString("MongoDB")
                             ?? throw new Exception("MongoDB ConnectionString is missing.");
-var mongoDatabaseName = builder.Configuration["MongoDB:DatabaseName"]
+
+var mongoDatabaseName = Environment.GetEnvironmentVariable("MONGODB_DATABASE")
+                        ?? builder.Configuration["MongoDbSettings:DatabaseName"]
                         ?? "DietManagementDB";
 
 var mongoUrlBuilder = new MongoUrlBuilder(mongoConnectionString);
