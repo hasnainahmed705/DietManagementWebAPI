@@ -30,7 +30,7 @@ namespace DietManagementWebAPI.Services
                 var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(user.timeZone);
                 var utcTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
 
-                var currentTimeString = utcTime.ToString("hh:mmtt");
+                var currentTimeString = utcTime.ToString("hh:mm tt");
 
                 var eligibleProfiles = await _mongoService.UserProfile
                     .Find(Builders<UserProfileData>.Filter.And(
