@@ -20,7 +20,10 @@ namespace DietManagementWebAPI.Services
         public async Task ProcessGymNotificationsAsync()
         {
             // Get current time formatted exactly like your DB: "05:00PM", "08:30AM"
-            var currentTimeString = DateTime.Now.ToString("hh:mmtt");
+            var pakistanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Karachi");
+            var pakistanTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, pakistanTimeZone);
+
+            var currentTimeString = pakistanTime.ToString("hh:mmtt");
 
             Console.WriteLine($"Current Time: {currentTimeString}");
 
