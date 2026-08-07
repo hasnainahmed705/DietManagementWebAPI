@@ -24,51 +24,19 @@ try
 {
     string? firebaseJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
 
-    if (!string.IsNullOrEmpty(firebaseJson))
-    {
-        // Running on Cloud Run - load from environment variable
-        var credential = CredentialFactory
+    var credential = CredentialFactory
             .FromJson<ServiceAccountCredential>(firebaseJson)
             .ToGoogleCredential();
 
-        FirebaseApp.Create(new AppOptions
-        {
-            Credential = credential
-        });
-
-    }
-    else
+    FirebaseApp.Create(new AppOptions
     {
-        // Local development - load from file
-        var localPath = Path.Combine(builder.Environment.ContentRootPath, "Firebase", "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json");
-
-        FirebaseApp.Create(new AppOptions
-        {
-            Credential = CredentialFactory
-                .FromFile<ServiceAccountCredential>(localPath)
-                .ToGoogleCredential()
-        });
-
-    }
+        Credential = credential
+    });
 }
 catch (Exception ex)
 {
     Console.WriteLine($"Firebase initialization failed: {ex.Message}");
 }
-// ========================================================================
-
-//var firebaseCredentialPath = Path.Combine(
-//    builder.Environment.ContentRootPath,
-//    "Firebase", 
-//    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"   // ← change to your real file name
-//); 
-
-//FirebaseApp.Create(new AppOptions()
-//{
-//    Credential = CredentialFactory
-//        .FromFile<ServiceAccountCredential>(firebaseCredentialPath)
-//        .ToGoogleCredential()
-//});
 
 // Services
 builder.Services.AddControllers();
