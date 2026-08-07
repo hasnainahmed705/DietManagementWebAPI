@@ -22,6 +22,8 @@ namespace DietManagementWebAPI.Services
             // Get current time formatted exactly like your DB: "05:00PM", "08:30AM"
             var currentTimeString = DateTime.Now.ToString("hh:mmtt");
 
+            Console.WriteLine($"Current Time: {currentTimeString}");
+
             // 1. Fetch eligible profiles using your typed UserProfile collection
             var eligibleProfiles = await _mongoService.UserProfile
                 .Find(Builders<UserProfileData>.Filter.And(
@@ -29,15 +31,23 @@ namespace DietManagementWebAPI.Services
                     Builders<UserProfileData>.Filter.Eq("GymTiming", currentTimeString)
                 )).ToListAsync();
 
+            Console.WriteLine($"Profiles Found: {eligibleProfiles.Count}");
+
             foreach (var profile in eligibleProfiles)
             {
                 var userName = profile.userName; // Assuming property is UserName, adjust if necessary
+                Console.WriteLine($"Checking user: {userName}");
 
                 // 2. Verify preferences using your typed collection
                 // (Assuming you have a similar property like: public IMongoCollection<NotificationsPreferencesData> NotificationsPreferences => ...)
                 var prefs = await _mongoService.NotificationsPreferences
                     .Find(Builders<NotificationsResponseModel>.Filter.Eq("userName", userName))
                     .FirstOrDefaultAsync();
+
+                
+                Console.WriteLine($"Preferences Found: {prefs != null}");
+                Console.WriteLine($"Workout Alerts: {prefs?.workoutAlerts}");
+                
 
                 if (prefs != null && prefs.workoutAlerts == true) // Adjust property name to match your model
                 {
@@ -47,9 +57,12 @@ namespace DietManagementWebAPI.Services
                         .Find(Builders<UsersDBModel>.Filter.Eq("userName", userName))
                         .FirstOrDefaultAsync();
 
+                    Console.WriteLine($"User Found: {user != null}");
+
                     if (user != null && !string.IsNullOrEmpty(user.fcmToken)) // Adjust property name to match your model
                     {
                         var fcmToken = user.fcmToken;
+                        Console.WriteLine($"Token: {user?.fcmToken}");
 
                         //// 4. Send FCM Push
                         //var message = new Message()
@@ -62,11 +75,20 @@ namespace DietManagementWebAPI.Services
                         //    }
                         //};
 
-                        await _FirebaseNotificationService.SendToDeviceAsync(
-                           fcmToken,
-                            "Time to Workout! 🏋️",
-                            $"It's {currentTimeString}, time for your scheduled gym session. Let's go!"
+                        try
+                        {
+                            await _FirebaseNotificationService.SendToDeviceAsync(
+                                fcmToken,
+                                "Time to Workout! 🏋️",
+                                $"It's {currentTimeString}, time for your scheduled gym session."
                             );
+
+                            Console.WriteLine("Sending Notification...");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
+                        }
                     }
                 }
             }
