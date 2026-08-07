@@ -209,6 +209,7 @@ public class UsersController : ControllerBase
                 password = hashedPassword,
                 userName = finalUserName,
                 twoStepAuth= false,
+                timeZone= request.timeZone
             };
 
             await _mongoService.Users.InsertOneAsync(newUser);
@@ -363,6 +364,7 @@ public class UsersController : ControllerBase
             token = token,
             twoStepAuth= user.twoStepAuth,
             fcmToken= user.fcmToken,
+            timeZone= user.timeZone,
         };
 
         return Ok(response);

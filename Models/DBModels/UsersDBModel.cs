@@ -51,6 +51,7 @@ namespace DietManagementWebAPI.Models.DBModels
         public string fcmToken { get; set; } = "";
 
         public bool twoStepAuth {  get; set; } = false;
+        public string timeZone {  get; set; } = "";
     }
 
     public class UserLoginResponse
@@ -63,6 +64,7 @@ namespace DietManagementWebAPI.Models.DBModels
         public string fcmToken { get; set; }
 
         public bool twoStepAuth { get; set; } = false;
+        public string timeZone { get; set; } = "";
     }
 
     public class ChangePasswordRequest
@@ -120,6 +122,7 @@ namespace DietManagementWebAPI.Models.DBModels
         public string GymTiming { get; set; } = "";
 
         public bool isPerformGym { get; set; }
+        public string timeZone { get; set; } = "";
     }
 
     public class UserProfileData
