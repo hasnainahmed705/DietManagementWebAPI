@@ -2,16 +2,19 @@
 using DietManagementWebAPI.Models.OtherModels;
 using FirebaseAdmin.Messaging;
 using MongoDB.Driver;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace DietManagementWebAPI.Services
 {
     public class GymNotificationJob
     {
         private readonly MongoDbService _mongoService;
+        private readonly FirebaseNotificationService _FirebaseNotificationService;
 
-        public GymNotificationJob(MongoDbService mongoService)
+        public GymNotificationJob(MongoDbService mongoService, FirebaseNotificationService firebaseNotificationService)
         {
             _mongoService = mongoService;
+            _FirebaseNotificationService = firebaseNotificationService;
         }
 
         public async Task ProcessGymNotificationsAsync()
@@ -48,18 +51,22 @@ namespace DietManagementWebAPI.Services
                     {
                         var fcmToken = user.fcmToken;
 
-                        // 4. Send FCM Push
-                        var message = new Message()
-                        {
-                            Token = fcmToken,
-                            Notification = new Notification()
-                            {
-                                Title = "Time to Workout! 🏋️",
-                                Body = $"It's {currentTimeString}, time for your scheduled gym session. Let's go!"
-                            }
-                        };
+                        //// 4. Send FCM Push
+                        //var message = new Message()
+                        //{
+                        //    Token = fcmToken,
+                        //    Notification = new Notification()
+                        //    {
+                        //        Title = "Time to Workout! 🏋️",
+                        //        Body = $"It's {currentTimeString}, time for your scheduled gym session. Let's go!"
+                        //    }
+                        //};
 
-                        await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                           fcmToken,
+                            "Time to Workout! 🏋️",
+                            $"It's {currentTimeString}, time for your scheduled gym session. Let's go!"
+                            );
                     }
                 }
             }
