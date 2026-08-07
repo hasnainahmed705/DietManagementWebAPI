@@ -34,7 +34,7 @@ FirebaseApp.Create(new AppOptions()
 //    builder.Environment.ContentRootPath,
 //    "Firebase", 
 //    "macromate-96750-firebase-adminsdk-fbsvc-41de704a92.json"   // ← change to your real file name
-//);
+//); 
 
 //FirebaseApp.Create(new AppOptions()
 //{
