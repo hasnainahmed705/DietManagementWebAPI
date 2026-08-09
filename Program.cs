@@ -194,14 +194,17 @@ app.MapControllers();
 app.MapGet("/", () => Results.Ok("API is running"));
 
 
-// --- SCHEDULE THE NOTIFICATION JOB ---
-// This runs the GymNotificationJob exactly at the 0th second of every minute
 RecurringJob.AddOrUpdate<DietManagementWebAPI.Services.GymNotificationJob>(
     "gym-notification-job",
     job => job.ProcessGymNotificationsAsync(),
     Cron.Minutely
 );
-// -------------------------------------
+
+RecurringJob.AddOrUpdate<DietManagementWebAPI.Services.UserOTPJob>(
+    "user-otp-job",
+    job => job.ProcessUserOtpAsync(),
+    Cron.Weekly
+);
 
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";

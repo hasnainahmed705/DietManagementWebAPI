@@ -66,6 +66,9 @@ public class UsersController : ControllerBase
             var usersMealsFilter = Builders<UsersMealsData>.Filter.Eq(x => x.userName, userName);
             var usersMealsResult = await _mongoService.UsersMeals.DeleteManyAsync(usersMealsFilter);
 
+            var notificationPrefsFilter = Builders<NotificationsResponseModel>.Filter.Eq(x => x.userName, userName);
+            var notificationPrefsResult = await _mongoService.NotificationsPreferences.DeleteOneAsync(notificationPrefsFilter);
+
             // Delete User Profile
             var profileFilter = Builders<UserProfileData>.Filter.Eq(x => x.userName, userName);
             var profileResult = await _mongoService.UserProfile.DeleteOneAsync(profileFilter);
@@ -73,6 +76,7 @@ public class UsersController : ControllerBase
             // Delete Users
             var usersFilter = Builders<UsersDBModel>.Filter.Eq(x => x.userName, userName);
             var usersResult = await _mongoService.Users.DeleteOneAsync(usersFilter);
+
 
             return Ok("Your account and all associated data have been successfully deleted.");
         }
@@ -496,6 +500,14 @@ public class UsersController : ControllerBase
             var burnCaloriesFilter = Builders<WorkoutBurnCaloriesModel>.Filter.Eq(m => m.userName, oldUserName);
             var burnCaloriesUpdate = Builders<WorkoutBurnCaloriesModel>.Update.Set(m => m.userName, updatedUserName);
             var burnCaloriesResult = await _mongoService.WorkoutBurnCalories.UpdateManyAsync(session, burnCaloriesFilter, burnCaloriesUpdate);
+
+            var userOtpsFilter = Builders<UserOtpsModel>.Filter.Eq(m => m.userName, oldUserName);
+            var userOtpsUpdate = Builders<UserOtpsModel>.Update.Set(m => m.userName, updatedUserName);
+            var userOtpsResult = await _mongoService.UserOtps.UpdateManyAsync(session, userOtpsFilter, userOtpsUpdate);
+
+            var notificationsPrefsFilter = Builders<NotificationsResponseModel>.Filter.Eq(m => m.userName, oldUserName);
+            var notificationsPrefsUpdate = Builders<NotificationsResponseModel>.Update.Set(m => m.userName, updatedUserName);
+            var notificationsPrefsResult = await _mongoService.NotificationsPreferences.UpdateManyAsync(session, notificationsPrefsFilter, notificationsPrefsUpdate);
 
             await session.CommitTransactionAsync();
 
