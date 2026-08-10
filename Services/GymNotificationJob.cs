@@ -40,29 +40,31 @@ namespace DietManagementWebAPI.Services
                 var eligibleProfile = await _mongoService.UserProfile
                     .Find(Builders<UserProfileData>.Filter.And(
                         Builders<UserProfileData>.Filter.Eq("isPerformGym", true),
-                        Builders<UserProfileData>.Filter.Eq("userName", user.userName),
-                        Builders<UserProfileData>.Filter.Eq("GymTiming", currentTimeString2)
+                        Builders<UserProfileData>.Filter.Eq("userName", user.userName)
                     )).FirstOrDefaultAsync();
 
                 if (prefs != null && prefs.workoutAlerts == true)
                 {
-                    if(eligibleProfile!=null && eligibleProfile.isPerformGym==true)
+                    if(eligibleProfile!=null)
                     {
-                        if (user != null && !string.IsNullOrEmpty(user.fcmToken))
+                        if (eligibleProfile.isPerformGym == true && eligibleProfile.GymTiming==currentTimeString2)
                         {
-                            var fcmToken = user.fcmToken;
+                            if (user != null && !string.IsNullOrEmpty(user.fcmToken))
+                            {
+                                var fcmToken = user.fcmToken;
 
-                            try
-                            {
-                                await _FirebaseNotificationService.SendToDeviceAsync(
-                                    fcmToken,
-                                    "Time to Workout! 🏋️",
-                                    $"It's {currentTimeString2}, time for your scheduled gym session."
-                                );
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.ToString());
+                                try
+                                {
+                                    await _FirebaseNotificationService.SendToDeviceAsync(
+                                        fcmToken,
+                                        "Time to Workout! 🏋️",
+                                        $"It's {currentTimeString2}, time for your scheduled gym session."
+                                    );
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.ToString());
+                                }
                             }
                         }
                     }
@@ -91,30 +93,35 @@ namespace DietManagementWebAPI.Services
                                     break;
                             }
 
-                            if (eligibleProfile.isPerformGym == true)
+                            if (eligibleProfile!=null)
                             {
-
-                                var userGymTiming = DateTime.ParseExact(
-                                                    eligibleProfile.GymTiming,
-                                                    "hh:mm tt",
-                                                    CultureInfo.InvariantCulture);
-
-                                var preWorkoutTime = userGymTiming.AddMinutes(-45);
-                                var postWorkoutTime = userGymTiming.AddMinutes(60);
-
-                                if (currentTimeString.Hour == preWorkoutTime.Hour &&
-                                    currentTimeString.Minute == preWorkoutTime.Minute)
+                                if (eligibleProfile.isPerformGym == true)
                                 {
-                                    this.mealTypeSession(fcmToken, currentTimeString2, "Pre Workout");
-                                }
 
-                                if (currentTimeString.Hour == postWorkoutTime.Hour &&
-                                    currentTimeString.Minute == postWorkoutTime.Minute)
-                                {
-                                    this.mealTypeSession(fcmToken, currentTimeString2, "Post Workout");
-                                }
+                                    var userGymTiming = DateTime.ParseExact(
+                                                        eligibleProfile.GymTiming,
+                                                        "hh:mm tt",
+                                                        CultureInfo.InvariantCulture);
 
+                                    var preWorkoutTime = userGymTiming.AddMinutes(-45);
+                                    var postWorkoutTime = userGymTiming.AddMinutes(60);
+
+                                    if (currentTimeString.Hour == preWorkoutTime.Hour &&
+                                        currentTimeString.Minute == preWorkoutTime.Minute)
+                                    {
+                                        this.mealTypeSession(fcmToken, currentTimeString2, "Pre Workout");
+                                    }
+
+                                    if (currentTimeString.Hour == postWorkoutTime.Hour &&
+                                        currentTimeString.Minute == postWorkoutTime.Minute)
+                                    {
+                                        this.mealTypeSession(fcmToken, currentTimeString2, "Post Workout");
+                                    }
+
+                                }
                             }
+
+                            
                         }
                         catch (Exception ex)
                         {
@@ -125,10 +132,12 @@ namespace DietManagementWebAPI.Services
 
                 if (prefs != null && prefs.waterReminders == true)
                 {
-                    var fcmToken = user.fcmToken;
-
-                    var waterReminderTimes = new[]
+                    if (user != null)
                     {
+                        var fcmToken = user.fcmToken;
+
+                        var waterReminderTimes = new[]
+                        {
                         "08:00 AM",
                         "10:00 AM",
                         "12:00 PM",
@@ -139,17 +148,19 @@ namespace DietManagementWebAPI.Services
                         "10:00 PM"
                     };
 
-                    if (fcmToken!="")
-                    {
-                        if (waterReminderTimes.Contains(currentTimeString2))
+                        if (fcmToken != "")
                         {
-                            await _FirebaseNotificationService.SendToDeviceAsync(
-                                fcmToken,
-                                "Stay Hydrated! 💧",
-                                "It's time to drink some water. Stay hydrated!"
-                            );
+                            if (waterReminderTimes.Contains(currentTimeString2))
+                            {
+                                await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken,
+                                    "Stay Hydrated! 💧",
+                                    "It's time to drink some water. Stay hydrated!"
+                                );
+                            }
                         }
                     }
+                   
                 }
             }
         }
