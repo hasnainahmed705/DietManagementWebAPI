@@ -46,7 +46,7 @@ namespace DietManagementWebAPI.Services
 
                 if (prefs != null && prefs.workoutAlerts == true)
                 {
-                    if(eligibleProfile.isPerformGym==true)
+                    if(eligibleProfile!=null && eligibleProfile.isPerformGym==true)
                     {
                         if (user != null && !string.IsNullOrEmpty(user.fcmToken))
                         {
