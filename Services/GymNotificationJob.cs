@@ -46,7 +46,7 @@ namespace DietManagementWebAPI.Services
 
                 if (prefs != null && prefs.workoutAlerts == true)
                 {
-                    if(eligibleProfile.isPerformGym==true && eligibleProfile.GymTiming== currentTimeString2)
+                    if(eligibleProfile.isPerformGym==true)
                     {
                         if (user != null && !string.IsNullOrEmpty(user.fcmToken))
                         {
@@ -91,7 +91,7 @@ namespace DietManagementWebAPI.Services
                                     break;
                             }
 
-                            if (eligibleProfile.isPerformGym == true && eligibleProfile.GymTiming != "")
+                            if (eligibleProfile.isPerformGym == true)
                             {
 
                                 var userGymTiming = DateTime.ParseExact(
