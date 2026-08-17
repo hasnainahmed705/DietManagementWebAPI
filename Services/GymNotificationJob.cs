@@ -142,7 +142,7 @@ namespace DietManagementWebAPI.Services
                         "10:00 AM",
                         "12:00 PM",
                         "02:00 PM",
-                        "03:54 PM",
+                        "04:13 PM",
                         "06:00 PM",
                         "08:00 PM",
                         "10:00 PM"
@@ -152,11 +152,26 @@ namespace DietManagementWebAPI.Services
                         {
                             if (waterReminderTimes.Contains(currentTimeString2))
                             {
-                                await _FirebaseNotificationService.SendToDeviceAsync(
+                                var notificationKey = $"{user.userName}_water_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+
+                                var alreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(x => x.notificationKey == notificationKey)
+                                    .AnyAsync();
+
+                                if (!alreadySent)
+                                {
+                                    await _FirebaseNotificationService.SendToDeviceAsync(
                                     fcmToken,
                                     "Stay Hydrated! 💧",
-                                    "It's time to drink some water. Stay hydrated!"
-                                );
+                                    "It's time to drink some water. Stay hydrated!");
+
+                                    await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                                    {
+                                        userName = user.userName,
+                                        notificationKey = notificationKey,
+                                        sentAt = DateTime.UtcNow
+                                    });
+                                }
                             }
                         }
                     }
