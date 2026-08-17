@@ -53,18 +53,41 @@ namespace DietManagementWebAPI.Services
                             {
                                 var fcmToken = user.fcmToken;
 
-                                try
+                                var workoutNotificationKey = $"{user.userName}_workout_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+                                var alreadySent = await _mongoService.SentNotificationLogs
+                                                .Find(Builders<SentNotificationLog>.Filter.And(
+                                                    Builders<SentNotificationLog>.Filter.Eq("notificationKey", workoutNotificationKey),
+                                                    Builders<SentNotificationLog>.Filter.Eq("userName", user.userName),
+                                                    Builders<SentNotificationLog>.Filter.Eq("notificationType", "Workout")
+                                                )).AnyAsync();
+
+                                if(!alreadySent)
                                 {
-                                    await _FirebaseNotificationService.SendToDeviceAsync(
-                                        fcmToken,
-                                        "Time to Workout! 🏋️",
-                                        $"It's {currentTimeString2}, time for your scheduled gym session."
-                                    );
+                                    try
+                                    {
+                                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                            fcmToken,
+                                            "Time to Workout! 🏋️",
+                                            $"It's {currentTimeString2}, time for your scheduled gym session."
+                                        );
+
+                                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                                        {
+                                            userName = user.userName,
+                                            notificationKey = workoutNotificationKey,
+                                            sentAt = DateTime.UtcNow,
+                                            notificationType = "Workout",
+                                            message = $"It's {currentTimeString2}, time for your scheduled gym session.",
+                                            title = "Time to Workout! 🏋️"
+                                        });
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine(ex.ToString());
+                                    }
                                 }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine(ex.ToString());
-                                }
+
+                                
                             }
                         }
                     }
@@ -81,13 +104,13 @@ namespace DietManagementWebAPI.Services
                             switch (currentTimeString2)
                             {
                                 case "08:00 AM":
-                                    this.mealTypeSession(fcmToken, currentTimeString2, "Breakfast");
+                                    this.mealTypeSession(fcmToken, currentTimeString2, user.userName, currentTimeString, "Breakfast");
                                     break;
                                 case "01:00 PM":
-                                    this.mealTypeSession(fcmToken, currentTimeString2, "Lunch");
+                                    this.mealTypeSession(fcmToken, currentTimeString2, user.userName, currentTimeString, "Lunch");
                                     break;
                                 case "08:00 PM":
-                                    this.mealTypeSession(fcmToken, currentTimeString2, "Dinner");
+                                    this.mealTypeSession(fcmToken, currentTimeString2, user.userName, currentTimeString, "Dinner");
                                     break;
                                 default:
                                     break;
@@ -109,13 +132,13 @@ namespace DietManagementWebAPI.Services
                                     if (currentTimeString.Hour == preWorkoutTime.Hour &&
                                         currentTimeString.Minute == preWorkoutTime.Minute)
                                     {
-                                        this.mealTypeSession(fcmToken, currentTimeString2, "Pre Workout");
+                                        this.mealTypeSession(fcmToken, currentTimeString2, user.userName, currentTimeString, "Pre Workout");
                                     }
 
                                     if (currentTimeString.Hour == postWorkoutTime.Hour &&
                                         currentTimeString.Minute == postWorkoutTime.Minute)
                                     {
-                                        this.mealTypeSession(fcmToken, currentTimeString2, "Post Workout");
+                                        this.mealTypeSession(fcmToken, currentTimeString2, user.userName, currentTimeString, "Post Workout");
                                     }
 
                                 }
@@ -142,7 +165,7 @@ namespace DietManagementWebAPI.Services
                         "10:00 AM",
                         "12:00 PM",
                         "02:00 PM",
-                        "04:18 PM",
+                        "04:00 PM",
                         "06:00 PM",
                         "08:00 PM",
                         "10:00 PM"
@@ -152,11 +175,13 @@ namespace DietManagementWebAPI.Services
                         {
                             if (waterReminderTimes.Contains(currentTimeString2))
                             {
-                                var notificationKey = $"{user.userName}_water_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
-
+                                var waterNotificationKey = $"{user.userName}_water_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
                                 var alreadySent = await _mongoService.SentNotificationLogs
-                                    .Find(x => x.notificationKey == notificationKey)
-                                    .AnyAsync();
+                                                .Find(Builders<SentNotificationLog>.Filter.And(
+                                                    Builders<SentNotificationLog>.Filter.Eq("notificationKey", waterNotificationKey),
+                                                    Builders<SentNotificationLog>.Filter.Eq("userName", user.userName),
+                                                    Builders<SentNotificationLog>.Filter.Eq("notificationType", "Water")
+                                                )).AnyAsync();
 
                                 if (!alreadySent)
                                 {
@@ -168,8 +193,11 @@ namespace DietManagementWebAPI.Services
                                     await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
                                     {
                                         userName = user.userName,
-                                        notificationKey = notificationKey,
-                                        sentAt = DateTime.UtcNow
+                                        notificationKey = waterNotificationKey,
+                                        sentAt = DateTime.UtcNow,
+                                        notificationType = "Water",
+                                        message = "It's time to drink some water. Stay hydrated!",
+                                        title = "Stay Hydrated! 💧"
                                     });
                                 }
                             }
@@ -180,7 +208,7 @@ namespace DietManagementWebAPI.Services
             }
         }
 
-        private async void mealTypeSession(string fcmToken1, string currentTimeString3, string mealType)
+        private async void mealTypeSession(string fcmToken1, string currentTimeString3, string userName, DateTime currentTimeString, string mealType)
         {
             string title;
             string description;
@@ -188,41 +216,158 @@ namespace DietManagementWebAPI.Services
             switch (mealType)
             {
                 case "Breakfast":
-                    title = "Time for Breakfast! 🍳";
-                    description = $"It's {currentTimeString3}, time for your scheduled breakfast.";
+                    var breakfastNotificationKey = $"{userName}_breakfast_{currentTimeString3}_{currentTimeString:yyyyMMdd}";
+                    var alreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(Builders<SentNotificationLog>.Filter.And(
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationKey", breakfastNotificationKey),
+                                        Builders<SentNotificationLog>.Filter.Eq("userName", userName),
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationType", "Breakfast")
+                                    )).AnyAsync();
+
+                    if(!alreadySent)
+                    {
+                        title = "Time for Breakfast! 🍳";
+                        description = $"It's {currentTimeString3}, time for your scheduled breakfast.";
+
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken1,
+                                    title,
+                                    description);
+
+                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                        {
+                            userName = userName,
+                            notificationKey = breakfastNotificationKey,
+                            sentAt = DateTime.UtcNow,
+                            notificationType = "Breakfast",
+                            message = description,
+                            title = title
+                        });
+                    }
                     break;
 
                 case "Lunch":
-                    title = "Time for Lunch! 🍽️";
-                    description = $"It's {currentTimeString3}, time for your scheduled lunch.";
+                    var lunchNotificationKey = $"{userName}_lunch_{currentTimeString3}_{currentTimeString:yyyyMMdd}";
+                    var lunchAlreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(Builders<SentNotificationLog>.Filter.And(
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationKey", lunchNotificationKey),
+                                        Builders<SentNotificationLog>.Filter.Eq("userName", userName),
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationType", "Lunch")
+                                    )).AnyAsync();
+
+                    if(!lunchAlreadySent)
+                    {
+                        title = "Time for Lunch! 🍽️";
+                        description = $"It's {currentTimeString3}, time for your scheduled lunch.";
+
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken1,
+                                    title,
+                                    description);
+
+                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                        {
+                            userName = userName,
+                            notificationKey = lunchNotificationKey,
+                            sentAt = DateTime.UtcNow,
+                            notificationType = "Lunch",
+                            message = description,
+                            title = title
+                        });
+                    }
                     break;
 
                 case "Dinner":
-                    title = "Time for Dinner! 🍽️";
-                    description = $"It's {currentTimeString3}, time for your scheduled dinner.";
+                    var dinnerNotificationKey = $"{userName}_dinner_{currentTimeString3}_{currentTimeString:yyyyMMdd}";
+                    var dinnerAlreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(Builders<SentNotificationLog>.Filter.And(
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationKey", dinnerNotificationKey),
+                                        Builders<SentNotificationLog>.Filter.Eq("userName", userName),
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationType", "Dinner")
+                                    )).AnyAsync();
+
+                    if(!dinnerAlreadySent)
+                    {
+                        title = "Time for Dinner! 🍽️";
+                        description = $"It's {currentTimeString3}, time for your scheduled dinner.";
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken1,
+                                    title,
+                                    description);
+                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                        {
+                            userName = userName,
+                            notificationKey = dinnerNotificationKey,
+                            sentAt = DateTime.UtcNow,
+                            notificationType = "Dinner",
+                            message = description,
+                            title = title
+                        });
+                    }
                     break;
 
                 case "Pre Workout":
-                    title = "Pre-Workout Meal Time! 💪";
-                    description = $"It's {currentTimeString3}, time for your pre-workout meal.";
+                    var preWorkoutNotificationKey = $"{userName}_pre_workout_{currentTimeString3}_{currentTimeString:yyyyMMdd}";
+                    var preWorkoutAlreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(Builders<SentNotificationLog>.Filter.And(
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationKey", preWorkoutNotificationKey),
+                                        Builders<SentNotificationLog>.Filter.Eq("userName", userName),
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationType", "Pre Workout")
+                                    )).AnyAsync();
+
+                    if(!preWorkoutAlreadySent)
+                    {
+                        title = "Pre-Workout Meal Time! 💪";
+                        description = $"It's {currentTimeString3}, time for your pre-workout meal.";
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken1,
+                                    title,
+                                    description);
+                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                        {
+                            userName = userName,
+                            notificationKey = preWorkoutNotificationKey,
+                            sentAt = DateTime.UtcNow,
+                            notificationType = "Pre Workout",
+                            message = description,
+                            title = title
+                        });
+                    }
                     break;
 
                 case "Post Workout":
-                    title = "Post-Workout Meal Time! 💪";
-                    description = $"It's {currentTimeString3}, time for your post-workout meal.";
+                    var postWorkoutNotificationKey = $"{userName}_post_workout_{currentTimeString3}_{currentTimeString:yyyyMMdd}";
+                    var postWorkoutAlreadySent = await _mongoService.SentNotificationLogs
+                                    .Find(Builders<SentNotificationLog>.Filter.And(
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationKey", postWorkoutNotificationKey),
+                                        Builders<SentNotificationLog>.Filter.Eq("userName", userName),
+                                        Builders<SentNotificationLog>.Filter.Eq("notificationType", "Post Workout")
+                                    )).AnyAsync();
+
+                    if(!postWorkoutAlreadySent)
+                    {
+                        title = "Post-Workout Meal Time! 💪";
+                        description = $"It's {currentTimeString3}, time for your post-workout meal.";
+                        await _FirebaseNotificationService.SendToDeviceAsync(
+                                    fcmToken1,
+                                    title,
+                                    description);
+                        await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                        {
+                            userName = userName,
+                            notificationKey = postWorkoutNotificationKey,
+                            sentAt = DateTime.UtcNow,
+                            notificationType = "Post Workout",
+                            message = description,
+                            title = title
+                        });
+                    }
                     break;
 
                 default:
-                    title = "Meal Reminder 🍽️";
-                    description = $"It's {currentTimeString3}, time for your scheduled meal.";
                     break;
             }
-
-            await _FirebaseNotificationService.SendToDeviceAsync(
-                fcmToken1,
-                title,
-                description
-            );
+            
         }
     }
 }

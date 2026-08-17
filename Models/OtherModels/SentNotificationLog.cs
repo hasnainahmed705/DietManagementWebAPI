@@ -10,4 +10,7 @@ public class SentNotificationLog
     public string userName { get; set; } = string.Empty;
     public string notificationKey { get; set; } = string.Empty;
     public DateTime sentAt { get; set; } = DateTime.UtcNow;
+    public string notificationType { get; set; } = string.Empty;
+    public string message { get; set; } = string.Empty;
+    public string title { get; set; } = string.Empty;
 }

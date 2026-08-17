@@ -42,6 +42,9 @@ public class UsersController : ControllerBase
                 });
             }
 
+            var userNotificationFilter = Builders<SentNotificationLog>.Filter.Eq(x => x.userName, userName);
+            var userNotificationResult = await _mongoService.SentNotificationLogs.DeleteManyAsync(userNotificationFilter);
+
             // Delete Weight Logs
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
             var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
@@ -103,6 +106,9 @@ public class UsersController : ControllerBase
                     message = "Username is required."
                 });
             }
+
+            var userNotificationFilter = Builders<SentNotificationLog>.Filter.Eq(x => x.userName, userName);
+            var userNotificationResult = await _mongoService.SentNotificationLogs.DeleteManyAsync(userNotificationFilter);
 
             // Delete Weight Logs
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
@@ -508,6 +514,10 @@ public class UsersController : ControllerBase
             var notificationsPrefsFilter = Builders<NotificationsResponseModel>.Filter.Eq(m => m.userName, oldUserName);
             var notificationsPrefsUpdate = Builders<NotificationsResponseModel>.Update.Set(m => m.userName, updatedUserName);
             var notificationsPrefsResult = await _mongoService.NotificationsPreferences.UpdateManyAsync(session, notificationsPrefsFilter, notificationsPrefsUpdate);
+
+            var userNotificationsFilter = Builders<SentNotificationLog>.Filter.Eq(m => m.userName, oldUserName);
+            var userNotificationsUpdate = Builders<SentNotificationLog>.Update.Set(m => m.userName, updatedUserName);
+            var userNotificationsResult = await _mongoService.SentNotificationLogs.UpdateManyAsync(session, userNotificationsFilter, userNotificationsUpdate);
 
             await session.CommitTransactionAsync();
 
