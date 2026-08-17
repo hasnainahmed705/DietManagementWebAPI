@@ -1,6 +1,7 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using DietManagementWebAPI.Models.EmailModels;
 using DietManagementWebAPI.Models.OtherModels;
+using FirebaseAdmin.Auth.Multitenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -130,5 +131,16 @@ public class NotificationsController : ControllerBase
                 error = ex.Message
             });
         }
+    }
+
+    [AllowAnonymous]
+    [HttpDelete]
+    [Route("DeleteAllUserNotifications")]
+    public async Task<ActionResult> DeleteAllUserNotifications(string userName)
+    {
+        var userNotificationFilter = Builders<SentNotificationLog>.Filter.Eq(x => x.userName, userName);
+        await _mongoService.SentNotificationLogs.DeleteManyAsync(userNotificationFilter);
+
+        return Ok("Your notifications have been successfully deleted.");
     }
 }
