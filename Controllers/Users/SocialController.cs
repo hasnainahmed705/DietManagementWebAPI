@@ -194,7 +194,7 @@ public class SocialController : ControllerBase
                     existingsenderFriendUpdate
                 );
             await session.CommitTransactionAsync();
-            return $"Friend: {receiverUser.userName} deleted successfully!";
+            return $"Friend: {senderUser.userName} deleted successfully!";
         }
         catch (Exception ex)
         {
