@@ -11,10 +11,12 @@ using static System.Collections.Specialized.BitVector32;
 public class SocialController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
+    private readonly FirebaseNotificationService _FirebaseNotificationService;
 
-    public SocialController(MongoDbService mongoService)
+    public SocialController(MongoDbService mongoService, FirebaseNotificationService firebaseNotificationService)
     {
         _mongoService = mongoService;
+        _FirebaseNotificationService = firebaseNotificationService;
     }
 
     [HttpPost]
@@ -47,6 +49,12 @@ public class SocialController : ControllerBase
             };
 
             await _mongoService.FriendRequests.InsertOneAsync(friendRequest);
+
+            await _FirebaseNotificationService.SendToDeviceAsync(
+                                            receiverUser.fcmToken,
+                                            "Someone Wants to Connect! 🎉",
+                                            $"{senderUser.userName} sent you a friend request."
+                                        );
 
             return "Friend request sent successfully!";
         }
@@ -132,6 +140,11 @@ public class SocialController : ControllerBase
                 }
 
                 await session.CommitTransactionAsync();
+                await _FirebaseNotificationService.SendToDeviceAsync(
+                                            senderUser.fcmToken,
+                                            "✅ You're Now Friends!",
+                                            $"{receiverUser.userName} accepted your friend request."
+                                        );
                 return "Friend request accepted successfully!";
             }
             else if (actionName == "Reject")
@@ -144,6 +157,11 @@ public class SocialController : ControllerBase
                 var frRequestResult = await _mongoService.FriendRequests.UpdateOneAsync(session, frRequestFilter, frRequestUpdate);
 
                 await session.CommitTransactionAsync();
+                await _FirebaseNotificationService.SendToDeviceAsync(
+                                            senderUser.fcmToken,
+                                            "❌ Friend Request Rejected",
+                                            $"{receiverUser.userName} rejected your friend request."
+                                        );
                 return "Friend request rejected successfully!";
             }
 
@@ -192,8 +210,13 @@ public class SocialController : ControllerBase
                 await _mongoService.UserFriends.UpdateOneAsync(
                     existingsenderFriendFilter,
                     existingsenderFriendUpdate
-                );
+                ); 
             await session.CommitTransactionAsync();
+            await _FirebaseNotificationService.SendToDeviceAsync(
+                                            senderUser.fcmToken,
+                                            "👋 You've Been Removed",
+                                            $"{receiverUser.userName} removed you from their friends list."
+                                        );
             return $"Friend: {senderUser.userName} deleted successfully!";
         }
         catch (Exception ex)
