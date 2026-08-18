@@ -3,6 +3,7 @@ using DietManagementWebAPI.Models.OtherModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using static System.Collections.Specialized.BitVector32;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -80,18 +81,56 @@ public class SocialController : ControllerBase
                 var frRequestUpdate = Builders<FriendRequestModel>.Update.Set(p => p.status, "Accepted");
                 var frRequestResult = await _mongoService.FriendRequests.UpdateOneAsync(session, frRequestFilter, frRequestUpdate);
 
-                var senderUserFriends = new UserFriendsModel
+                var existingUserFriends = await _mongoService.UserFriends.Find(x => x.userName == senderUser.userName).FirstOrDefaultAsync();
+                var existingUserFriends2 = await _mongoService.UserFriends.Find(x => x.userName == receiverUser.userName).FirstOrDefaultAsync();
+
+                if (existingUserFriends != null)
                 {
-                    userName = senderUser.userName,
-                    friends = new List<string> { receiverUser.userName }
-                };
-                var receiverUserFriends = new UserFriendsModel
+                    var update = Builders<UserFriendsModel>.Update
+                        .AddToSet(x => x.friends, receiverUser.userName);
+
+                    await _mongoService.UserFriends.UpdateOneAsync(
+                        x => x.userName == senderUser.userName,
+                        update
+                    );
+                }
+                else
                 {
-                    userName = receiverUser.userName,
-                    friends = new List<string> { senderUser.userName }
-                };
-                await _mongoService.UserFriends.InsertOneAsync(senderUserFriends);
-                await _mongoService.UserFriends.InsertOneAsync(receiverUserFriends);
+                    var senderUserFriends = new UserFriendsModel
+                    {
+                        userName = senderUser.userName,
+                        friends = new List<string>
+                        {
+                            receiverUser.userName
+                        }
+                    };
+
+                    await _mongoService.UserFriends.InsertOneAsync(senderUserFriends);
+                }
+                if (existingUserFriends2 != null)
+                {
+                    var update = Builders<UserFriendsModel>.Update
+                        .AddToSet(x => x.friends, senderUser.userName);
+
+                    await _mongoService.UserFriends.UpdateOneAsync(
+                        x => x.userName == receiverUser.userName,
+                        update
+                    );
+                }
+                else
+                {
+                    var receiverUserFriends = new UserFriendsModel
+                    {
+                        userName = receiverUser.userName,
+                        friends = new List<string>
+                        {
+                            senderUser.userName
+                        }
+                    };
+
+                    await _mongoService.UserFriends.InsertOneAsync(receiverUserFriends);
+                }
+
                 await session.CommitTransactionAsync();
                 return "Friend request accepted successfully!";
             }
@@ -122,24 +161,33 @@ public class SocialController : ControllerBase
     [Route("DeleteFriend")]
     public async Task<string> DeleteFriend(string senderUserName, string receiverUserName)
     {
-        UserFriendsModel? existingFriend = null;
         var receiverUser = await _mongoService.Users.Find(u => u.userName == receiverUserName).FirstOrDefaultAsync();
 
         var senderUser = await _mongoService.Users.Find(u => u.userName == senderUserName).FirstOrDefaultAsync();
         if (senderUser == null)
             return $"Unable to find a friend: {senderUserName}";
 
+        using var session = await _mongoService.Client.StartSessionAsync();
+
         try
         {
-            existingFriend = await _mongoService.UserFriends.Find(r => r.userName == receiverUser.userName && r.friends.Contains(senderUser.userName)).FirstOrDefaultAsync();
-            if (existingFriend == null)
-                return "Friend not found!";
-            existingFriend.friends.Remove(senderUser.userName);
-            await _mongoService.UserFriends.ReplaceOneAsync(f => f.userName == receiverUser.userName, existingFriend);
+            session.StartTransaction();
+            var existingFriendFilter = Builders<UserFriendsModel>.Filter.And(Builders<UserFriendsModel>.Filter.Eq(r => r.userName,receiverUser.userName),Builders<UserFriendsModel>.Filter.AnyEq(r => r.friends,senderUser.userName));
+
+            var existingFriendUpdate = Builders<UserFriendsModel>.Update
+                .Pull(r => r.friends, senderUser.userName);
+
+            var existingFriendResult =
+                await _mongoService.UserFriends.UpdateOneAsync(
+                    existingFriendFilter,
+                    existingFriendUpdate
+                );
+            await session.CommitTransactionAsync();
             return $"Friend: {receiverUser.userName} deleted successfully!";
         }
         catch (Exception ex)
         {
+            await session.AbortTransactionAsync();
             return "Failed to delete a friend.";
         }
     }
