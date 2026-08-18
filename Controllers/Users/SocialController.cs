@@ -172,15 +172,26 @@ public class SocialController : ControllerBase
         try
         {
             session.StartTransaction();
-            var existingFriendFilter = Builders<UserFriendsModel>.Filter.And(Builders<UserFriendsModel>.Filter.Eq(r => r.userName,receiverUser.userName),Builders<UserFriendsModel>.Filter.AnyEq(r => r.friends,senderUser.userName));
+            var existingreceiverFriendFilter = Builders<UserFriendsModel>.Filter.And(Builders<UserFriendsModel>.Filter.Eq(r => r.userName,receiverUser.userName),Builders<UserFriendsModel>.Filter.AnyEq(r => r.friends,senderUser.userName));
 
-            var existingFriendUpdate = Builders<UserFriendsModel>.Update
+            var existingreceiverFriendUpdate = Builders<UserFriendsModel>.Update
                 .Pull(r => r.friends, senderUser.userName);
 
             var existingFriendResult =
                 await _mongoService.UserFriends.UpdateOneAsync(
-                    existingFriendFilter,
-                    existingFriendUpdate
+                    existingreceiverFriendFilter,
+                    existingreceiverFriendUpdate
+                );
+
+            var existingsenderFriendFilter = Builders<UserFriendsModel>.Filter.And(Builders<UserFriendsModel>.Filter.Eq(r => r.userName, senderUser.userName), Builders<UserFriendsModel>.Filter.AnyEq(r => r.friends, receiverUser.userName));
+
+            var existingsenderFriendUpdate = Builders<UserFriendsModel>.Update
+                .Pull(r => r.friends, receiverUser.userName);
+
+            var existingsenderFriendResult =
+                await _mongoService.UserFriends.UpdateOneAsync(
+                    existingsenderFriendFilter,
+                    existingsenderFriendUpdate
                 );
             await session.CommitTransactionAsync();
             return $"Friend: {receiverUser.userName} deleted successfully!";
