@@ -49,6 +49,9 @@ public class UsersController : ControllerBase
             var weightFilter = Builders<UserWeightModel>.Filter.Eq(x => x.userName, userName);
             var weightResult = await _mongoService.UserWeightLogs.DeleteManyAsync(weightFilter);
 
+            var userFriendsFilter = Builders<UserFriendsModel>.Filter.Eq(m => m.userName, userName);
+            var userFriendsResult = await _mongoService.UserFriends.DeleteManyAsync(userFriendsFilter);
+
             var burnCaloriesFilter = Builders<WorkoutBurnCaloriesModel>.Filter.Eq(x => x.userName, userName);
             var burnCaloriesResult = await _mongoService.WorkoutBurnCalories.DeleteManyAsync(burnCaloriesFilter);
 
@@ -210,6 +213,8 @@ public class UsersController : ControllerBase
                 promotionOffers = true
             };
 
+            string userFriendCode = await GenerateUniqueFriendCodeUserNameAsync();
+
             // Insert User
             var newUser = new UsersDBModel
             {
@@ -219,7 +224,8 @@ public class UsersController : ControllerBase
                 password = hashedPassword,
                 userName = finalUserName,
                 twoStepAuth= false,
-                timeZone= request.timeZone
+                timeZone= request.timeZone,
+                yourFriendCode = userFriendCode,
             };
 
             await _mongoService.Users.InsertOneAsync(newUser);
@@ -256,6 +262,17 @@ public class UsersController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    private async Task<string> GenerateUniqueFriendCodeUserNameAsync()
+    {
+        string friendCode;
+        var random = new Random();
+
+        int number = random.Next(100000000, 999999999);
+        friendCode = number.ToString();
+
+        return friendCode;
     }
 
     // Helper Method
@@ -510,6 +527,22 @@ public class UsersController : ControllerBase
             var userOtpsFilter = Builders<UserOtpsModel>.Filter.Eq(m => m.userName, oldUserName);
             var userOtpsUpdate = Builders<UserOtpsModel>.Update.Set(m => m.userName, updatedUserName);
             var userOtpsResult = await _mongoService.UserOtps.UpdateManyAsync(session, userOtpsFilter, userOtpsUpdate);
+
+            var frRequestsFilter = Builders<FriendRequestModel>.Filter.Eq(m => m.receiverUserName, oldUserName);
+            var frRequestsUpdate = Builders<FriendRequestModel>.Update.Set(m => m.receiverUserName, updatedUserName);
+            var frRequestsResult = await _mongoService.FriendRequests.UpdateManyAsync(session, frRequestsFilter, frRequestsUpdate);
+
+            var frRequestsFilter2 = Builders<FriendRequestModel>.Filter.Eq(m => m.senderUserName, oldUserName);
+            var frRequestsUpdate2 = Builders<FriendRequestModel>.Update.Set(m => m.senderUserName, updatedUserName);
+            var frRequestsResult2 = await _mongoService.FriendRequests.UpdateManyAsync(session, frRequestsFilter2, frRequestsUpdate2);
+
+            var userFriendsFilter = Builders<UserFriendsModel>.Filter.Eq(m => m.userName, oldUserName);
+            var userFriendsUpdate = Builders<UserFriendsModel>.Update.Set(m => m.userName, updatedUserName);
+            var userFriendsResult = await _mongoService.UserFriends.UpdateManyAsync(session, userFriendsFilter, userFriendsUpdate);
+
+            var userFriendsArrayFilter =Builders<UserFriendsModel>.Filter.AnyEq(x => x.friends,oldUserName);
+            var userFriendsArrayUpdate =Builders<UserFriendsModel>.Update.Set("friends.$", updatedUserName);
+            var userFriendsArrayResult =await _mongoService.UserFriends.UpdateManyAsync(session, userFriendsArrayFilter, userFriendsArrayUpdate);
 
             var notificationsPrefsFilter = Builders<NotificationsResponseModel>.Filter.Eq(m => m.userName, oldUserName);
             var notificationsPrefsUpdate = Builders<NotificationsResponseModel>.Update.Set(m => m.userName, updatedUserName);

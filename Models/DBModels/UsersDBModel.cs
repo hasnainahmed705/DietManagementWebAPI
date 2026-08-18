@@ -52,6 +52,7 @@ namespace DietManagementWebAPI.Models.DBModels
 
         public bool twoStepAuth {  get; set; } = false;
         public string timeZone {  get; set; } = "";
+        public string yourFriendCode {  get; set; } = "";
     }
 
     public class UserLoginResponse
@@ -65,6 +66,7 @@ namespace DietManagementWebAPI.Models.DBModels
 
         public bool twoStepAuth { get; set; } = false;
         public string timeZone { get; set; } = "";
+        public string yourFriendCode { get; set; } = "";
     }
 
     public class ChangePasswordRequest
@@ -123,6 +125,7 @@ namespace DietManagementWebAPI.Models.DBModels
 
         public bool isPerformGym { get; set; }
         public string timeZone { get; set; } = "";
+        public string yourFriendCode { get; set; } = "";
     }
 
     public class UserProfileData
