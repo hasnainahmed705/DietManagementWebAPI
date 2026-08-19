@@ -23,6 +23,8 @@ public class SocialController : ControllerBase
     [Route("SendFriendRequest")]
     public async Task<string> SendFriendRequest(string senderFriendCode, string receiverFriendCode)
     {
+        if(senderFriendCode == receiverFriendCode)
+            return "Friend request to the same account is not allowed.";
         var senderUser = await _mongoService.Users.Find(u => u.yourFriendCode == senderFriendCode).FirstOrDefaultAsync();
         if (senderUser == null)
             return "Sender not found!";
@@ -55,6 +57,21 @@ public class SocialController : ControllerBase
                                             "Someone Wants to Connect! 🎉",
                                             $"{senderUser.userName} sent you a friend request."
                                         );
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(receiverUser.timeZone);
+            var currentTimeString = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+
+            var currentTimeString2 = currentTimeString.ToString("hh:mm tt");
+
+            var workoutNotificationKey = $"{receiverUser.userName}_social_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+            await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+            {
+                userName = receiverUser.userName,
+                notificationKey = workoutNotificationKey,
+                sentAt = DateTime.UtcNow,
+                notificationType = "Social",
+                message = $"{senderUser.userName} sent you a friend request.",
+                title = "Someone Wants to Connect! 🎉"
+            });
 
             return "Friend request sent successfully!";
         }
@@ -145,6 +162,21 @@ public class SocialController : ControllerBase
                                             "✅ You're Now Friends!",
                                             $"{receiverUser.userName} accepted your friend request."
                                         );
+                var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(senderUser.timeZone);
+                var currentTimeString = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+
+                var currentTimeString2 = currentTimeString.ToString("hh:mm tt");
+
+                var workoutNotificationKey = $"{senderUser.userName}_social_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+                await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                {
+                    userName = senderUser.userName,
+                    notificationKey = workoutNotificationKey,
+                    sentAt = DateTime.UtcNow,
+                    notificationType = "Social",
+                    message = $"{receiverUser.userName} accepted your friend request.",
+                    title = "✅ You're Now Friends!"
+                });
                 return "Friend request accepted successfully!";
             }
             else if (actionName == "Reject")
@@ -162,6 +194,21 @@ public class SocialController : ControllerBase
                                             "❌ Friend Request Rejected",
                                             $"{receiverUser.userName} rejected your friend request."
                                         );
+                var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(senderUser.timeZone);
+                var currentTimeString = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+
+                var currentTimeString2 = currentTimeString.ToString("hh:mm tt");
+
+                var workoutNotificationKey = $"{senderUser.userName}_social_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+                await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+                {
+                    userName = senderUser.userName,
+                    notificationKey = workoutNotificationKey,
+                    sentAt = DateTime.UtcNow,
+                    notificationType = "Social",
+                    message = $"{receiverUser.userName} rejected your friend request.",
+                    title = "❌ Friend Request Rejected"
+                });
                 return "Friend request rejected successfully!";
             }
 
@@ -217,6 +264,21 @@ public class SocialController : ControllerBase
                                             "👋 You've Been Removed",
                                             $"{receiverUser.userName} removed you from their friends list."
                                         );
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(senderUser.timeZone);
+            var currentTimeString = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
+
+            var currentTimeString2 = currentTimeString.ToString("hh:mm tt");
+
+            var workoutNotificationKey = $"{senderUser.userName}_social_{currentTimeString2}_{currentTimeString:yyyyMMdd}";
+            await _mongoService.SentNotificationLogs.InsertOneAsync(new SentNotificationLog
+            {
+                userName = senderUser.userName,
+                notificationKey = workoutNotificationKey,
+                sentAt = DateTime.UtcNow,
+                notificationType = "Social",
+                message = $"{receiverUser.userName} removed you from their friends list.",
+                title = "👋 You've Been Removed"
+            });
             return $"Friend: {senderUser.userName} deleted successfully!";
         }
         catch (Exception ex)

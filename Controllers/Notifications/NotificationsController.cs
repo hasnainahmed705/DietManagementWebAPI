@@ -136,11 +136,92 @@ public class NotificationsController : ControllerBase
     [AllowAnonymous]
     [HttpDelete]
     [Route("DeleteAllUserNotifications")]
-    public async Task<ActionResult> DeleteAllUserNotifications(string userName)
+    public async Task<string> DeleteAllUserNotifications(List<SentNotificationLog> sentNotificationLogs)
     {
-        var userNotificationFilter = Builders<SentNotificationLog>.Filter.Eq(x => x.userName, userName);
-        await _mongoService.SentNotificationLogs.DeleteManyAsync(userNotificationFilter);
+        if (sentNotificationLogs == null || !sentNotificationLogs.Any())
+        {
+            return "No notifications selected.";
+        }
 
-        return Ok("Your notifications have been successfully deleted.");
+        var userName = sentNotificationLogs.First().userName;
+
+        var notificationKeys = sentNotificationLogs
+            .Select(x => x.notificationKey)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        if (!notificationKeys.Any())
+        {
+            return "No valid notifications selected.";
+        }
+
+        var filter = Builders<SentNotificationLog>.Filter.And(
+        Builders<SentNotificationLog>.Filter.Eq(
+            x => x.userName,
+            userName),
+        Builders<SentNotificationLog>.Filter.In(
+            x => x.notificationKey,
+            notificationKeys)
+        );
+
+        var result = await _mongoService.SentNotificationLogs
+            .DeleteManyAsync(filter);
+
+        return $"{result.DeletedCount} notification(s) deleted successfully.";
+    }
+
+    [AllowAnonymous]
+    [HttpPatch]
+    [Route("UpdateUserNotifications")]
+    public async Task<string> UpdateUserNotifications(List<SentNotificationLog> sentNotificationLogs)
+    {
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        if (sentNotificationLogs == null || !sentNotificationLogs.Any())
+        {
+            return "No notifications selected.";
+        }
+
+        var userName = sentNotificationLogs.First().userName;
+
+        var notificationKeys = sentNotificationLogs
+            .Where(x => !x.isRead)
+            .Select(x => x.notificationKey)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        if (!notificationKeys.Any())
+        {
+            return "No valid notifications selected.";
+        }
+
+        var filter = Builders<SentNotificationLog>.Filter.And(
+        Builders<SentNotificationLog>.Filter.Eq(
+            x => x.userName,
+            userName),
+        Builders<SentNotificationLog>.Filter.In(
+            x => x.notificationKey,
+            notificationKeys)
+        );
+        var update = Builders<SentNotificationLog>.Update.Set(x => x.isRead, true);
+
+        try
+        {
+            session.StartTransaction();
+
+            var result = await _mongoService.SentNotificationLogs
+                .UpdateManyAsync(session, filter, update);
+            session.CommitTransaction();
+
+            return $"{result.ModifiedCount} notification(s) marked as read successfully.";
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            return $"Error occurred while updating notifications: {ex.Message}";
+        }
+
     }
 }

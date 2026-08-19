@@ -15,6 +15,7 @@ namespace DietManagementWebAPI.Models.OtherModels
         public string notificationType { get; set; } = string.Empty;
         public string message { get; set; } = string.Empty;
         public string title { get; set; } = string.Empty;
+        public bool isRead { get; set; } = false;
     }
 }
     
