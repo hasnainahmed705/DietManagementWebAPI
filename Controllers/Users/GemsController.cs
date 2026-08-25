@@ -73,15 +73,17 @@ public class GemsCOntroller : ControllerBase
 
     [HttpPost]
     [Route("CollectGemCard")]
-    public async Task<IActionResult> CollectGemCard(string userName,int gemCardIndex)
+    public async Task<IActionResult> CollectGemCard(string userName, int gemCardIndex)
     {
         using var session = await _mongoService.Client.StartSessionAsync();
 
         var user = await _mongoService.Users.Find(u => u.userName == userName).FirstOrDefaultAsync();
         if (user == null) return NotFound();
+
         // 1. Check if cards need to be reset (e.g., they collect daily)
         DateTime todayLocal = TimeZoneHelper.GetUserLocalDate(user.timeZone);
         string todayStr = todayLocal.ToString("yyyy-MM-dd");
+
         if (user.lastGemCollectionDate != todayStr && user.gemCardIndex >= 8)
         {
             // It's a new day and they finished yesterday's cards, reset index
@@ -90,44 +92,29 @@ public class GemsCOntroller : ControllerBase
 
         if (user.gemCardIndex >= 8)
             return BadRequest(new { message = "All 8 cards already collected today." });
-        // 2. Determine Gem Reward 
 
-        int gemsAwarded = 0;
+        // Optional but recommended: Ensure the index requested matches the user's actual progress
+        if (user.gemCardIndex != gemCardIndex)
+            return BadRequest(new { message = "Invalid card index. Please refresh." });
 
-        switch(gemCardIndex)
-        {
-            case 1:
-                gemsAwarded = 1;
-                break;
-            case 2:
-                gemsAwarded = 5;
-                break;
-            case 3:
-                gemsAwarded = 3;
-                break;
-            case 4:
-                gemsAwarded = 2;
-                break;
-            case 5:
-                gemsAwarded = 5;
-                break;
-            case 6:
-                gemsAwarded = 2;
-                break;
-            case 7:
-                gemsAwarded = 4;
-                break;
-            case 8:
-                gemsAwarded = 3;
-                break;
-        }
+        // 2. Determine Gem Reward
+        // Flutter sends a 0-based index (0 to 7)
+        int[] gemValues = { 1, 5, 3, 2, 5, 2, 4, 3 };
+
+        // Safety check just in case the index is out of bounds
+        if (gemCardIndex < 0 || gemCardIndex > 7)
+            return BadRequest(new { message = "Invalid card index." });
+
+        int gemsAwarded = gemValues[gemCardIndex];
 
         session.StartTransaction();
+
         // 3. Update User
         var update = Builders<UsersDBModel>.Update
             .Inc(u => u.totalGems, gemsAwarded)
-            .Inc(u => u.gemCardIndex, user.gemCardIndex)
+            .Inc(u => u.gemCardIndex, 1) // IMPORTANT: Increment by exactly 1
             .Set(u => u.lastGemCollectionDate, todayStr);
+
         await _mongoService.Users.UpdateOneAsync(u => u.userName == userName, update);
 
         await session.CommitTransactionAsync();
@@ -136,7 +123,8 @@ public class GemsCOntroller : ControllerBase
         {
             awardedGems = gemsAwarded,
             totalGems = user.totalGems + gemsAwarded,
-            nextCardIndex = gemCardIndex + 1
+            nextCardIndex = user.gemCardIndex + 1
         });
     }
+
 }
