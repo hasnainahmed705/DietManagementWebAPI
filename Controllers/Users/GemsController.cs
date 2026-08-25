@@ -126,7 +126,7 @@ public class GemsCOntroller : ControllerBase
         // 3. Update User
         var update = Builders<UsersDBModel>.Update
             .Inc(u => u.totalGems, gemsAwarded)
-            .Inc(u => u.gemCardIndex, gemCardIndex)
+            .Set(u => u.gemCardIndex, gemCardIndex)
             .Set(u => u.lastGemCollectionDate, todayStr);
         await _mongoService.Users.UpdateOneAsync(u => u.userName == userName, update);
 
