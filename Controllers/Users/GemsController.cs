@@ -73,7 +73,7 @@ public class GemsCOntroller : ControllerBase
 
     [HttpPost]
     [Route("CollectGemCard")]
-    public async Task<IActionResult> CollectGemCard(string userName)
+    public async Task<IActionResult> CollectGemCard(string userName,int gemCardIndex)
     {
         using var session = await _mongoService.Client.StartSessionAsync();
 
@@ -91,16 +91,42 @@ public class GemsCOntroller : ControllerBase
         if (user.gemCardIndex >= 8)
             return BadRequest(new { message = "All 8 cards already collected today." });
         // 2. Determine Gem Reward 
-        // Cards 0-3 give lower gems (e.g., 2 gems each = 8 total)
-        // Cards 4-7 give higher gems (e.g., 4 gems each = 16 total)
-        // Total for 8 cards = 24 gems
-        int gemsAwarded = (user.gemCardIndex < 4) ? 2 : 4;
+
+        int gemsAwarded = 0;
+
+        switch(gemCardIndex)
+        {
+            case 1:
+                gemsAwarded = 1;
+                break;
+            case 2:
+                gemsAwarded = 5;
+                break;
+            case 3:
+                gemsAwarded = 3;
+                break;
+            case 4:
+                gemsAwarded = 2;
+                break;
+            case 5:
+                gemsAwarded = 5;
+                break;
+            case 6:
+                gemsAwarded = 2;
+                break;
+            case 7:
+                gemsAwarded = 4;
+                break;
+            case 8:
+                gemsAwarded = 3;
+                break;
+        }
 
         session.StartTransaction();
         // 3. Update User
         var update = Builders<UsersDBModel>.Update
             .Inc(u => u.totalGems, gemsAwarded)
-            .Inc(u => u.gemCardIndex, 1)
+            .Inc(u => u.gemCardIndex, gemCardIndex)
             .Set(u => u.lastGemCollectionDate, todayStr);
         await _mongoService.Users.UpdateOneAsync(u => u.userName == userName, update);
 
@@ -110,7 +136,7 @@ public class GemsCOntroller : ControllerBase
         {
             awardedGems = gemsAwarded,
             totalGems = user.totalGems + gemsAwarded,
-            nextCardIndex = user.gemCardIndex + 1
+            nextCardIndex = gemCardIndex + 1
         });
     }
 }
