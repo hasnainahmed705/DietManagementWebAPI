@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using DietManagementWebAPI.Models.DBModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
+using Org.BouncyCastle.Tls;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -75,13 +77,19 @@ public class MealsController : ControllerBase
 
         try
         {
+            bool isDbUpdateRequired = false;
+            string nextFoodId;
+
+            var user = await _mongoService.Users.Find(u => u.userName == meals.userName).FirstOrDefaultAsync();
+            DateTime todayLocal = TimeZoneHelper.GetUserLocalDate(user.timeZone);
+            string todayStr = todayLocal.ToString("yyyy-MM-dd");
+
             var lastMeal = await _mongoService.UsersMeals
             .Find(FilterDefinition<UsersMealsData>.Empty)
             .Sort(Builders<UsersMealsData>.Sort.Descending(x => x.FoodId))
             .Limit(1)
             .FirstOrDefaultAsync();
 
-            string nextFoodId;
 
             if (lastMeal == null || string.IsNullOrEmpty(lastMeal.FoodId))
             {
@@ -104,7 +112,59 @@ public class MealsController : ControllerBase
             }
 
             meals.FoodId = nextFoodId;
-            // ===============================================
+
+            if (string.IsNullOrEmpty(user.lastMealDateStr))
+            {
+                user.currentStreak = 1;
+                user.lastMealDateStr = todayStr;
+                user.longestStreak = 1;
+                isDbUpdateRequired = true;
+            }
+            else
+            {
+                DateTime lastMealDate = DateTime.Parse(user.lastMealDateStr);
+                TimeSpan difference = todayLocal.Date - lastMealDate.Date;
+
+                if (difference.TotalDays == 1)
+                {
+                    user.currentStreak += 1;
+                    user.lastMealDateStr = todayStr;
+
+                    if (user.currentStreak > user.longestStreak)
+                        user.longestStreak = user.currentStreak;
+
+                    isDbUpdateRequired = true;
+                }
+                else if (difference.TotalDays == 2)
+                {
+                    user.previousStreak = user.currentStreak;
+                    user.currentStreak = 1;
+                    user.lastMealDateStr = todayStr;
+                    isDbUpdateRequired = true;
+                }
+                else if (difference.TotalDays > 2)
+                {
+                    user.previousStreak = 0;
+                    user.currentStreak = 1;
+                    user.lastMealDateStr = todayStr;
+                    isDbUpdateRequired = true;
+                }
+            }
+
+            if (isDbUpdateRequired)
+            {
+                using var session = await _mongoService.Client.StartSessionAsync();
+
+                session.StartTransaction();
+                var update = Builders<UsersDBModel>.Update
+                    .Set(u => u.currentStreak, user.currentStreak)
+                    .Set(u => u.longestStreak, user.longestStreak)
+                    .Set(u => u.lastMealDateStr, user.lastMealDateStr)
+                    .Set(u => u.previousStreak, user.previousStreak);
+                await _mongoService.Users.UpdateOneAsync(u => u.userName == user.userName, update);
+
+                await session.CommitTransactionAsync();
+            }
 
             await _mongoService.UsersMeals.InsertOneAsync(meals);
             return Ok(meals);

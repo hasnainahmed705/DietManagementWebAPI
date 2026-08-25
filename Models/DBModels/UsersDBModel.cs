@@ -53,6 +53,13 @@ namespace DietManagementWebAPI.Models.DBModels
         public bool twoStepAuth {  get; set; } = false;
         public string timeZone {  get; set; } = "";
         public string yourFriendCode {  get; set; } = "";
+        public int currentStreak {  get; set; } = 0;
+        public int gemCardIndex {  get; set; } = 0;
+        public string lastGemCollectionDate {  get; set; } = "";
+        public string lastMealDateStr {  get; set; } = "";
+        public int longestStreak {  get; set; } = 0;
+        public int previousStreak {  get; set; } = 0;
+        public int totalGems {  get; set; } = 0;
     }
 
     public class UserLoginResponse
