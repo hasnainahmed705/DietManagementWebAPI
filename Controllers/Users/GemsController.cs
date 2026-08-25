@@ -134,6 +134,8 @@ public class GemsCOntroller : ControllerBase
         using var session = await _mongoService.Client.StartSessionAsync();
 
         var user = await _mongoService.Users.Find(u => u.userName == userName).FirstOrDefaultAsync();
+        DateTime todayLocal = TimeZoneHelper.GetUserLocalDate(user.timeZone);
+        string todayStr = todayLocal.ToString("yyyy-MM-dd");
         if (user == null) return NotFound();
 
         // 1. Check if the user has enough gems (costs 10 gems)
@@ -171,7 +173,8 @@ public class GemsCOntroller : ControllerBase
             .Set(u => u.totalGems, user.totalGems)
             .Set(u => u.currentStreak, user.currentStreak)
             .Set(u => u.longestStreak, user.longestStreak)
-            .Set(u => u.previousStreak, user.previousStreak);
+            .Set(u => u.previousStreak, user.previousStreak)
+            .Set(u => u.lastMealDateStr, todayStr);
 
         await _mongoService.Users.UpdateOneAsync(filter, update);
 
