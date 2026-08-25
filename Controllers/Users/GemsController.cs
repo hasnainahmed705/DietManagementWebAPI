@@ -127,4 +127,62 @@ public class GemsCOntroller : ControllerBase
         });
     }
 
+    [HttpPost]
+    [Route("RestoreStreak")]
+    public async Task<IActionResult> RestoreStreak(string userName)
+    {
+        using var session = await _mongoService.Client.StartSessionAsync();
+
+        var user = await _mongoService.Users.Find(u => u.userName == userName).FirstOrDefaultAsync();
+        if (user == null) return NotFound();
+
+        // 1. Check if the user has enough gems (costs 10 gems)
+        if (user.totalGems < 10)
+        {
+            return BadRequest(new { message = "You need at least 10 gems to restore your streak!" });
+        }
+
+        // 2. Check if the user is eligible (must have a previous streak that was broken exactly 1 day ago)
+        // If previousStreak is 0, they either didn't break a streak, or they missed 2+ days (which should clear previousStreak).
+        if (user.previousStreak <= 0)
+        {
+            return BadRequest(new { message = "Streak restoration is not available!" });
+        }
+
+        // 3. Perform the restoration
+        user.totalGems -= 10;
+
+        // Add the lost streak back to their current streak
+        // Example: They had 15, missed yesterday, logged today. 
+        // current = 1, previous = 15. After restore: current = 16.
+        user.currentStreak += user.previousStreak;
+
+        if (user.currentStreak > user.longestStreak)
+        {
+            user.longestStreak = user.currentStreak;
+        }
+
+        // 4. Reset previous streak so it cannot be restored again
+        user.previousStreak = 0;
+
+        // 5. Update the database
+        var filter = Builders<UsersDBModel>.Filter.Eq(u => u.userName, userName);
+        var update = Builders<UsersDBModel>.Update
+            .Set(u => u.totalGems, user.totalGems)
+            .Set(u => u.currentStreak, user.currentStreak)
+            .Set(u => u.longestStreak, user.longestStreak)
+            .Set(u => u.previousStreak, user.previousStreak);
+
+        await _mongoService.Users.UpdateOneAsync(filter, update);
+
+        return Ok(new
+        {
+            message = "Streak restored successfully!",
+            totalGems = user.totalGems,
+            currentStreak = user.currentStreak,
+            longestStreak = user.longestStreak
+        });
+    }
+
+
 }
