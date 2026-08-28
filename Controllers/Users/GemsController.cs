@@ -157,7 +157,7 @@ public class GemsCOntroller : ControllerBase
         // Add the lost streak back to their current streak
         // Example: They had 15, missed yesterday, logged today. 
         // current = 1, previous = 15. After restore: current = 16.
-        user.currentStreak += user.previousStreak;
+        user.currentStreak += user.previousStreak + 1;
 
         if (user.currentStreak > user.longestStreak)
         {
