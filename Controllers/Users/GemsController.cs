@@ -74,7 +74,7 @@ public class GemsCOntroller : ControllerBase
 
     [HttpPost]
     [Route("CollectGemCard")]
-    public async Task<IActionResult> CollectGemCard(string userName, int gemCardIndex)
+    public async Task<IActionResult> CollectGemCard(string userName, int gemCardIndex,int gemValue)
     {
         using var session = await _mongoService.Client.StartSessionAsync();
 
@@ -98,15 +98,12 @@ public class GemsCOntroller : ControllerBase
         if (user.gemCardIndex != gemCardIndex)
             return BadRequest(new { message = "Invalid card index. Please refresh." });
 
-        // 2. Determine Gem Reward
-        // Flutter sends a 0-based index (0 to 7)
-        int[] gemValues = { 1, 5, 3, 2, 5, 2, 4, 3 };
-
+       
         // Safety check just in case the index is out of bounds
         if (gemCardIndex < 0 || gemCardIndex > 7)
             return BadRequest(new { message = "Invalid card index." });
 
-        int gemsAwarded = gemValues[gemCardIndex];
+        int gemsAwarded = gemValue;
 
         session.StartTransaction();
 
