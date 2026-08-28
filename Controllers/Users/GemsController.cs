@@ -66,7 +66,8 @@ public class GemsCOntroller : ControllerBase
             longestStreak = user.longestStreak,
             previousStreak = user.previousStreak, // If > 0, Flutter will show the "Restore" button
             totalGems = user.totalGems,
-            gemCardIndex = user.gemCardIndex
+            gemCardIndex = user.gemCardIndex,
+            lastGemCollectionDate= user.lastGemCollectionDate,
         });
 
     }
@@ -128,7 +129,7 @@ public class GemsCOntroller : ControllerBase
     }
 
     [HttpPatch]
-    [Route("UpdateGemCardIndex")]
+    [Route("UpdateGemCardIndex")] 
     public async void UpdateGemCardIndex(string userName)
     {
         using var session = await _mongoService.Client.StartSessionAsync();
