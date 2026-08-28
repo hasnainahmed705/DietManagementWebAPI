@@ -127,7 +127,17 @@ public class GemsCOntroller : ControllerBase
         });
     }
 
-    [HttpPost]
+    [HttpPatch]
+    [Route("UpdateGemCardIndex")]
+    public async void UpdateGemCardIndex(string userName)
+    {
+        using var session = await _mongoService.Client.StartSessionAsync();
+        session.StartTransaction();
+        var user = await _mongoService.Users.UpdateOneAsync(u => u.userName == userName, Builders<UsersDBModel>.Update.Set(u => u.gemCardIndex, 0));
+        await session.CommitTransactionAsync();
+    }
+
+        [HttpPost]
     [Route("RestoreStreak")]
     public async Task<IActionResult> RestoreStreak(string userName)
     {
