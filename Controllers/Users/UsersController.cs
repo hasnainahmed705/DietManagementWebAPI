@@ -1,6 +1,7 @@
 ﻿using DietManagementWebAPI.Models.DBModels;
 using DietManagementWebAPI.Models.EmailModels;
 using DietManagementWebAPI.Models.OtherModels;
+using DietManagementWebAPI.Services;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,11 +24,13 @@ public class UsersController : ControllerBase
 {
     private readonly MongoDbService _mongoService;
     private readonly IConfiguration _configuration;
+    private readonly EmailService _emailService;
 
-    public UsersController(MongoDbService mongoService, IConfiguration configuration)
+    public UsersController(MongoDbService mongoService, IConfiguration configuration, EmailService emailService)
     {
         _mongoService = mongoService;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     [HttpDelete]
@@ -809,37 +812,12 @@ public class UsersController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
-            var email = new MimeMessage();
+            await _emailService.SendHelpCenterEmailAsync(
+           request.Name,
+           request.Email,
+           request.Subject,
+           request.Message);
 
-            // You are sending the email to yourself
-            email.To.Add(MailboxAddress.Parse("macromate9@gmail.com"));
-
-            // You are also the sender (Gmail requires this to match the authenticated account)
-            email.From.Add(new MailboxAddress("Macro Mate App", "macromate9@gmail.com"));
-
-            // IMPORTANT: When you hit "Reply" in your email client, it goes to the user who sent it
-            email.ReplyTo.Add(new MailboxAddress(request.Name, request.Email));
-
-            email.Subject = $"App Help Center: {request.Subject}";
-            email.Body = new TextPart(MimeKit.Text.TextFormat.Html)
-            {
-                Text = $@"
-                <h3>New Support Request</h3>
-                <p><strong>Name:</strong> {request.Name}</p>
-                <p><strong>Email:</strong> {request.Email}</p>
-                <p><strong>Message:</strong></p>
-                <p>{request.Message}</p>"
-            };
-
-            using var smtp = new SmtpClient();
-
-            await smtp.ConnectAsync("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.SslOnConnect);
-
-            // Use your Gmail address and the App Password you generate
-            await smtp.AuthenticateAsync("macromate9@gmail.com", "dxuyzgcffidtohnb");
-
-            await smtp.SendAsync(email);
-            await smtp.DisconnectAsync(true);
             return Ok(new { message = "Email sent successfully" });
         }
         catch (System.Exception ex)
