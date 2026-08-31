@@ -27,7 +27,7 @@ namespace DietManagementWebAPI.Services
             // The email goes TO YOU (the app admin)
             email.To.Add("macromate9@gmail.com");
             // Important: This sets the "Reply-To" to the user's email, so when you click Reply, it goes to them
-            email.ReplyTo.Add(userEmail);
+            email.ReplyTo=userEmail;
             email.Subject = $"App Help Center: {userSubject}";
 
             email.HtmlBody = $@"
