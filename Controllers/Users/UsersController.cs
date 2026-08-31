@@ -806,6 +806,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [Route("SendHelpCenterMessage")]
     public async Task<IActionResult> SendHelpCenterMessage([FromBody] ContactFormDto request)
     {
@@ -818,11 +819,11 @@ public class UsersController : ControllerBase
            request.Subject,
            request.Message);
 
-            return Ok(new { message = "Email sent successfully" });
+            return Ok(new { message = "Message sent successfully. We’ll be in touch shortly." });
         }
         catch (System.Exception ex)
         {
-            return StatusCode(500, new { message = "Failed to send email", error = ex.Message });
+            return StatusCode(500, new { message = "Failed to send message", error = ex.Message });
         }
     }
 
