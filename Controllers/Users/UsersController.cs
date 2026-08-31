@@ -833,7 +833,7 @@ public class UsersController : ControllerBase
 
             using var smtp = new SmtpClient();
 
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.ConnectAsync("smtp.gmail.com", 465, MailKit.Security.SecureSocketOptions.SslOnConnect);
 
             // Use your Gmail address and the App Password you generate
             await smtp.AuthenticateAsync("macromate9@gmail.com", "dxuyzgcffidtohnb");
