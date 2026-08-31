@@ -836,7 +836,7 @@ public class UsersController : ControllerBase
             await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
 
             // Use your Gmail address and the App Password you generate
-            await smtp.AuthenticateAsync("macromate9@gmail.com", "dxuy zgcf fidt ohnb");
+            await smtp.AuthenticateAsync("macromate9@gmail.com", "dxuyzgcffidtohnb");
 
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
