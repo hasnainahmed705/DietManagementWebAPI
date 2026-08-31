@@ -62,6 +62,15 @@ namespace DietManagementWebAPI.Models.DBModels
         public int totalGems {  get; set; } = 0;
     }
 
+    public class ContactFormDto
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Subject { get; set; }
+        public string Message { get; set; }
+    }
+
+
     public class UserLoginResponse
     {
         public string firstName { get; set; }
